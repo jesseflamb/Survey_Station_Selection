@@ -112,13 +112,16 @@ SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(CTD_hrs = ifelse(Gear.Sampled == "CTD",0.5,0)) %>% 
   mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
   mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
-  mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 10) %>% 
+  mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 12) %>% 
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
   mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
+
+# Filter out Stations 
+# Code TBD
 
 
 # Next: rearrange data to calculate time to travel to and complete station operations
@@ -131,9 +134,6 @@ shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>%
 shipslog <- na.omit(shipslog)
 
 
-# Filter out Stations 
-# Code TBD
-
 # Choose Departure Date
 depart <- ymd_hm("2023-05-14 12:00")
 
@@ -144,7 +144,7 @@ ShipsLog <- shipslog %>% group_by(Station, Grid.ID) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Grid.ID,Sta_Time)
                                           
 
-
+ShipsLog
 
 ```
 

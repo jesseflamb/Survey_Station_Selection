@@ -1,0 +1,229 @@
+---
+title: 'WGOA Project: Gcha Lengths & Weights: Summary Statistics'
+author: "Jesse F Lamb"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Data Import and Wrangle:
+
+Load packages, import the data file will all necessary fields.  All following plots & tables come from data below.  Because of the nature of the data, At sea Length Data is separate from Abundance data, as Abundance data has to be calculated separately (see "2022-04-07WGOA03-19_Gcha_Abundance.R").  Also, there are two data sets of fish lengths & weights: length and subsample weight taken at sea, and length and weight taken of INDIVIDUALS for diet analysis (lab lengths), which are not included in this analysis.  THERE IS NO DIET DATA INCLUDED HERE.  
+
+```{r setup, echo=TRUE, results='hide', warning=FALSE, message=FALSE}
+
+### Install Packages
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("here","tidyverse","lubridate","readr","tidyr","readxl", "kableExtra","tinytex",
+              "stats","sp","geosphere","maptools","mapdata", "ggpubr", "ggmap","qdap")
+ipak(packages)
+
+##Read Raw YOY cruise data For AT SEA LENGTHS
+ASdata <- read.csv(here("Data", "2022_04_05-WGOA_YOY_At_Sea_Lengths_2003-19_ERQ.csv"))
+
+Ldata <- ASdata %>% filter(COMMON_NAME == "Walleye Pollock, Age-0" & PURPOSE %in% c("GEODISTN","GEODISTN/DIELCOMP") & NET_PATH ==0 ) %>% select(STATION_NAME, COMMON_NAME, HAUL_ID, GMT_DATE_TIME, LENGTH_AT_SEA, LENGTH_UNITS, LAT, LON, YEAR)
+
+Ldata1719 <- ASdata %>% filter(COMMON_NAME == "Walleye Pollock, Age-0" & YEAR %in% c(2017,2019) & NET_PATH ==0 ) %>% 
+  select(STATION_NAME, COMMON_NAME, HAUL_ID, GMT_DATE_TIME, LENGTH_AT_SEA, LENGTH_UNITS,LAT,LON, YEAR)
+
+Ldata <- bind_rows(Ldata,Ldata1719)
+Ldata$YEAR <- as.factor(Ldata$YEAR)
+#Ldata$GMT_DATE_TIME<-lubridate::ymd_hms(Ldata$GMT_DATE_TIME)
+#write.csv(Ldata,here("Data","2022-12-06_WGOA_SeaLength_03-19.csv"))
+
+##Read Raw YOY cruise data For Mean AT SEA Subsample Weights
+Abundance_data <- read.csv(here("Data", "2022-04-07_WGOA_Abundances_03-19.csv"))
+
+SWdata <- Abundance_data %>% 
+  filter(COMMON_NAME == "Walleye Pollock, Age-0" & PURPOSE %in% c("GEODISTN","GEODISTN/DIELCOMP") & NET_PATH ==0 ) %>% 
+  select(STATION_NAME, COMMON_NAME, HAUL_ID, GMT_DATE_TIME, SUBSAMPLE_NUMBER, SUBSAMPLE_WEIGHT,NoPerM3,LAT,LON, YEAR) 
+
+SWdata1719 <- Abundance_data %>% 
+  filter(COMMON_NAME == "Walleye Pollock, Age-0" & YEAR %in% c(2017,2019) & NET_PATH ==0 ) %>% 
+  select(STATION_NAME, COMMON_NAME, HAUL_ID, GMT_DATE_TIME, SUBSAMPLE_NUMBER, SUBSAMPLE_WEIGHT,NoPerM3,LAT,LON, YEAR)
+
+SWdata <- bind_rows(SWdata,SWdata1719)
+SWdata$YEAR <- as.factor(SWdata$YEAR)
+
+SWdata <- SWdata %>% mutate(MeanSubWtg = (SUBSAMPLE_WEIGHT/SUBSAMPLE_NUMBER)*1000) %>% filter(MeanSubWtg != 0) # weight to grams
+#write.csv(SWdata,here("Data","2022-12-16_WGOA_Subsample_No_Wtg_03-19.csv"))
+
+
+## Create Dataset (from abundance data) of station locations for station location plots
+Sta_Map <- Abundance_data %>% select(HAUL_ID,LAT,LON,YEAR) %>% transform(YEAR = as.factor(YEAR)) %>%  dplyr::arrange(YEAR) %>% distinct()
+
+
+## Combine Ldata & SWdata sets for summary stat table
+
+metaLdata <- Ldata %>% select(HAUL_ID,GMT_DATE_TIME,LAT,LON,YEAR,LENGTH_AT_SEA) %>% 
+  tidyr::separate(HAUL_ID, c("CRUISE","STATION","HAUL","GEAR","NET"), sep = " ")  %>% 
+  group_by(CRUISE,STATION,HAUL,LAT,LON,YEAR) %>% 
+  summarise(MeanLength = mean(LENGTH_AT_SEA)) 
+
+metaSWdata <- SWdata %>% select(HAUL_ID,GMT_DATE_TIME,LAT,LON,YEAR,SUBSAMPLE_NUMBER,SUBSAMPLE_WEIGHT,NoPerM3,MeanSubWtg) %>% 
+  tidyr::separate(HAUL_ID, c("CRUISE","STATION","HAUL","GEAR","NET"), sep = " ") %>% 
+  select (CRUISE,STATION,HAUL,GMT_DATE_TIME,LAT,LON,YEAR,NoPerM3,MeanSubWtg)
+
+metaData <- left_join(metaSWdata,metaLdata, by = c("CRUISE","STATION","HAUL","LAT","LON","YEAR"))
+metaData <- metaData %>% mutate(JDate = lubridate::yday(GMT_DATE_TIME))%>% na.omit() #DY15-07 Sta 16 no Lengths
+
+```
+
+<p>&nbsp;</p>
+
+<center>**WGOA Diet Data: Summary Statistics**</center>
+
+**Purpose**
+
+The following lists a general overview on the breath and scope of EcoFOCI juvenile Walleye Pollock (*Gadus chalcogrammus*) survey timing, spatial scope, abundance, length, weight, in the Western Gulf of Alaska. The following data is included below: Table of summary statistics & Plots of sample collection (Julian Date), Station Locations, Lengths at sea histogram, mean length at sea per station (boxplot), mean subsample weight per station (boxplot).  
+
+<p>&nbsp;</p>
+
+## Summary Survey Table
+
+Create Summary Table of all surveys: n of fish, mean Length, mean Weight, mean Abundance 
+
+```{r Summary Stats, echo=FALSE, warning=FALSE}
+metaData.1 <- metaData %>% group_by(CRUISE,YEAR) %>% 
+  summarise(`Mean Abundance (m^3)` = mean(NoPerM3),
+            `Mean SubWeight(g)` = mean(MeanSubWtg),
+            `Mean Length(mm)` = mean(MeanLength),
+            `Median Cruise Day` = median(JDate)) %>% 
+  arrange(YEAR)
+colnames(metaData.1)<- c("Cruise","Year","Mean Abundance n3","Mean Subsample Weight (g)","Mean Length (mm)","Meidan Cruise Date")
+metaData.1$`Mean Abundance n3` <- round(metaData.1$`Mean Abundance n3`,digits = 5)
+metaData.1$`Mean Subsample Weight (g)` <- round(metaData.1$`Mean Subsample Weight (g)`,digits = 2)
+metaData.1$`Mean Length (mm)` <- round(metaData.1$`Mean Length (mm)`,digits = 2)
+
+kbl(metaData.1, booktabs = TRUE) %>% kable_styling(bootstrap_options = c("striped", "hover")) 
+#%>% column_spec(1:6, color = "black")
+```
+
+### Notes on Summary Table: 
+What to do about survey timing from early to later years?
+
+<p>&nbsp;</p>
+## Station Locations By Year
+
+Create one Station Map per year, then grid all maps together
+
+```{r Station Maps, echo=FALSE, warning=FALSE}
+# Nest Data by Year, apply station mapping function, then plot all maps via ggarrange
+
+SampleTimeFiles <- here::here("Docs","Sample Time Maps")
+
+# Create Bounding Box for survey area.  Only need one as Survey Grid is in Same region for all surveys.
+bbox <- make_bbox(Sta_Map$LON,Sta_Map$LAT)
+#Get Background Map: stamen, toner
+MapInfo <- get_map(bbox,maptype="toner-lite", source="stamen")
+# Station Map function
+StaMapF <- function(z,zz){ggmap(MapInfo)+ #plot base layer map
+    geom_point(data=z, mapping= aes(x=LON, y=LAT), colour="black", size = 1)+
+    #xlab("Longitude (W)")+
+    #ylab("Latitude (N)")+
+    labs(title = zz)+
+    theme(axis.text.x=element_text(face="bold"), axis.text.y = element_text(face="bold"),
+          axis.title.x = element_blank(), axis.title.y = element_blank())}
+
+Sta_Map_Plots <- Sta_Map %>% dplyr::select(LAT,LON,YEAR) %>%  dplyr::group_by(YEAR) %>% 
+  tidyr::nest() %>% ungroup() %>%  mutate(plot = purrr::map2(data,YEAR,StaMapF)) # in StaMapF above, data = z, YEAR = zz
+
+#walk2(Sta_Map_Plots$plot, Sta_Map_Plots$YEAR, ~ggsave(plot = .x, filename = paste0(.y,".png"), 
+#                               path=SampleTimeFiles,
+#                               device = "png", dpi = 300))
+
+AllSta_Plots <- Sta_Map_Plots$plot
+
+ggarrange(plotlist = AllSta_Plots, ncol = 3, nrow = 3)
+
+```
+
+### Notes on Survey Maps:
+Do we limit our analysis to stations from the most commonly sampled areas: between Shumagins Is. and Kodiak & eastern side of Kodiak?
+
+<p>&nbsp;</p>
+## Survey Timing (Day of Year)
+
+```{r Date Sampled All Years, echo=FALSE, warning=FALSE}
+
+JDtbl <- Abundance_data %>% mutate(JDate = lubridate::yday(GMT_DATE_TIME)) %>%  
+  mutate(Year = lubridate::year(GMT_DATE_TIME)) %>% 
+  select(Year,GMT_DATE_TIME,JDate,LAT,LON) %>% distinct()
+JDtbl$Year <-as.factor(JDtbl$Year)
+
+JDrange <- JDtbl %>% select(Year,GMT_DATE_TIME,JDate) %>% distinct()
+
+
+# Year Palette: Colorblind friendly colors 
+yrpalette <- c('#E6AB02','#A6761D','#666666','#A6CEE3',
+ '#1F78B4','#B2DF8A','#33A02C','#FB9A99', '#FDBF6F' )
+
+# Plot Date ranges of Surveys: Used a boxplot and removed the whiskers (outlier.shape = NA, coef = 0) & Median lines (fatten = NULL)
+jdpl <- ggplot(JDrange, aes(x=JDate, y=Year, fill = Year)) + 
+  geom_boxplot(outlier.shape = NA, coef = 0, fatten = NULL, show.legend = TRUE) + scale_fill_manual(values = yrpalette) + theme(legend.position = "top", axis.text = element_text(face="bold"))
+jdpl.2 <- jdpl + labs(x = "Day of Year")
+jdpl.2
+
+ggsave("WGOA_Survey_Time_Range.png",jdpl.2, path = SampleTimeFiles)
+                                                         
+            
+```
+
+### Notes on Survey Timing
+For reference: Year Day 230 = Mid-August, 240 = Late August, 250 = Mid-September, 280 = October 7th.  Earlier sampling (2003 - 09) occurred later than 2013 - 19 sampling.  What to do?  Also, do I even include 2011?
+
+<p>&nbsp;</p>
+## Boxplots of Mean Lengths at Sea
+
+Create Boxplot of Mean pollock lengths at sea
+
+```{r,LASboxplot, echo=FALSE, warning=FALSE}
+
+LASboxplot <- ggplot(Ldata, aes(x = YEAR, y= LENGTH_AT_SEA, fill=YEAR)) +
+  geom_boxplot(show.legend = FALSE)  
+  
+ggpar(LASboxplot,  ylab = "Length (mm)", palette = c('#E6AB02','#A6761D','#666666','#A6CEE3',
+                                   '#1F78B4','#B2DF8A','#33A02C','#FB9A99', '#FDBF6F' ) )
+```
+
+
+<p>&nbsp;</p>
+## Boxplots of Mean Subsample Weights (kg) at Sea
+
+Create Boxplot of Mean pollock subsample weights from at sea data.  These weights represent taking the value of subsample weights / subsample number per station.
+Note: outliers (weights > 10g) omitted for graphing purposes
+
+```{r,MeanSubWtboxplot, echo=FALSE, warning=FALSE}
+SWtgboxplot <- ggplot(SWdata, aes(x = YEAR, y=MeanSubWtg, fill=YEAR)) +
+  geom_boxplot(show.legend = FALSE) + ylim(0,10)  
+  
+ggpar(SWtgboxplot,  ylab = "Weight (g)", palette = c('#E6AB02','#A6761D','#666666','#A6CEE3',
+                                   '#1F78B4','#B2DF8A','#33A02C','#FB9A99', '#FDBF6F' ) )
+```
+
+<p>&nbsp;</p>
+## Lengths at Sea Histogram
+
+Histogram of Gcha for WGOA sampling years (2003 - 2017, 2019 is still being sorted):
+
+```{r LAS Histogram, echo=FALSE, warning=FALSE}
+LAShist <- gghistogram(Ldata, x = "LENGTH_AT_SEA",add = "median", rug = TRUE,bins = 85,
+                       alpha = 1, 
+                       color = "YEAR", fill = "YEAR", xlab = 'Length(mm)',
+                       palette = c('#E6AB02','#A6761D','#666666','#A6CEE3',
+                                   '#1F78B4','#B2DF8A','#33A02C','#FB9A99', '#FDBF6F' ),
+                       facet.by = "YEAR")
+ggpar(LAShist, xlim = c(0,150), legend = "none")
+
+ggsave("WGOA_Fish_LenHist_by_Year.png",LAShist, path = SampleTimeFiles)
+
+```
+
+### Notes on at sea Length data
+
+The 'PURPOSE' column values for 2017 & 2019 are only "GRID".  This goes against LR's protocol of only using the values "GEODISTN","GEODISTN/DIELCOMP".  Will inform KB about this. 

@@ -1,0 +1,159 @@
+---
+title: "WGOA Survey Stations"
+author: "Jesse F Lamb"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Overview:
+
+This work is for planning of the DY23-07 Spring Larval Survey in the Western Gulf of Alaska (WGOA).  The survey has been allotted 12 days at sea (DAS), beginning from Dutch Harbor, AK and ending in Kodiak, AK.  The first maps will focus on the most relevant spatial regions, due to prior years sampling.  The subsequent maps will delve into the most efficient cruise tracks give our limited DAS compared to previous years (21 DAS).  
+```{r Setup & Opening Map, echo=TRUE, warning=FALSE, message=FALSE}
+#Install Packages
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
+              "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
+              "oce", "here","reshape2", "viridis", "export", "rnaturalearth", 
+              "rnaturalearthdata", "forcats")
+ipak(packages) 
+
+# Create a base Layer map of the core sampled areas, as per JL and LR meeting on 2023-02-16
+# Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
+  mutate(Gear.Sampled = str_replace(Gear.Sampled,"NEU","")) %>% 
+  mutate(Gear.Sampled = str_replace(Gear.Sampled,", CTD","CTD")) %>% 
+  mutate(Gear.Sampled = str_replace(Gear.Sampled,"CALVETCTD","CALVET, CTD")) 
+
+
+  
+WGOAdata$Longitude..W. <- WGOAdata$Longitude..W.*-1
+# get bathymetry data
+b = getNOAA.bathy(lon1 = -166, lon2 = -140, lat1 = 52, lat2 = 62, 
+                  resolution = 15)
+## Querying NOAA database ...
+## This may take seconds to minutes, depending on grid size
+## Building bathy matrix ...
+# convert bathymetry to data frame
+bf = fortify.bathy(b)
+# get regional polygons
+reg = map_data("world2Hires")
+reg = subset(reg, region %in% c('USSR', 'USA'))
+# convert lat longs
+reg$long = (360 - reg$long)*-1
+# set map limits, whole region
+lons = c(-167, -149) #-140 = large map
+lats = c(53, 62) # 52 = large map
+
+######################################
+# make plot
+GOARegion_Map_New <- ggplot()+
+   # add 50m contour
+  geom_contour(data = bf, 
+               aes(x=x, y=y, z=z),
+               breaks=c(-50),
+               linewidth=c(0.5),
+               colour="light grey")+
+  # add 100m contour
+  geom_contour(data = bf, 
+               aes(x=x, y=y, z=z),
+               breaks=c(-100),
+               linewidth=c(0.5),
+               colour="darkgrey")+
+  # add 200m contour
+  geom_contour(data = bf, 
+               aes(x=x, y=y, z=z),
+               breaks=c(-200),
+               linewidth=c(0.5),
+               colour="black")+
+  # add coastline
+  geom_sf(data = world)+
+  coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+  
+  #Plot WGOA points
+  geom_point(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., shape = Gear.Sampled), size = 1)+ 
+  #Delete "shape..." for just stations
+  geom_text(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., label = Station ), 
+            nudge_y = -0.08, size = 2.5)+ 
+  #station text size & nudge NOT IN 'aes' configure projection and plot domain coord_map(xlim = lons, ylim = lats)+
+  
+  # formatting
+  scale_shape_discrete()+ 
+  theme_bw()+
+  xlab("Longitude")+
+  ylab("Latitude")+
+  theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) 
+  
+ GOARegion_Map_New
+
+ggsave("SpringLarval_AllSTA_2023_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+
+```
+
+The plot above represents the sampling plan developed from the DY19-05 survey, which had 21 DAS.  We will narrow down this amount of stations to represent the core area (**define here**), Shelikof Strait, and the NE portion of Kodiak Is.  We will have multiple iterations of plans, where we will plot potential survey tracks for our given time of 12 DAS and the starting port of Dutch, Harbor AK.    
+
+
+```{r station Spatial Limit, echo=TRUE, warning=FALSE, message=FALSE}
+### Create Station & Runtime Dataset, mirroring "Final Station Runtime" Spreadsheets
+
+# First, Create data.frame that mirrors "Final Station Runtime"
+SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU",0)) %>% 
+  mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","CTD")) %>%  
+  mutate(Bongo_hrs = ifelse(Station > 0, 0.33,0)) %>% 
+  mutate(CTD_hrs = ifelse(Gear.Sampled == "CTD",0.5,0)) %>% 
+  mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
+  mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
+  mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 12) %>% 
+  mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
+  mutate(long_dif = long_rad - shift(long_rad)) %>% 
+  mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
+  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
+  mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
+  mutate(Steam_T = lubridate::dhours(Steam_T))
+
+# Filter out Stations 
+# Code TBD
+
+
+# Next: rearrange data to calculate time to travel to and complete station operations
+shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% 
+  unite("Station",Station:Grid.ID, sep = "_", remove = FALSE) %>% 
+  select(Station,Steam_T,Station_Time) %>% 
+  gather(key="Ops", Time_Dur, -Station) %>% arrange(Station) %>% 
+  separate(Station, c("Station","Grid.ID"), sep = "_") %>% 
+  transform(Station = as.numeric(Station)) %>% arrange(Station) 
+shipslog <- na.omit(shipslog)
+
+
+# Choose Departure Date
+depart <- ymd_hm("2023-05-14 12:00")
+
+# Create a table of Station Completion Times 
+ShipsLog <- shipslog %>% group_by(Station, Grid.ID) %>% 
+  reframe(Time_Dur = lubridate::dseconds(sum(Time_Dur)))  %>% 
+  mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
+  mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Grid.ID,Sta_Time)
+                                          
+
+ShipsLog
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
