@@ -20,7 +20,7 @@ ipak <- function(pkg){
 packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
               "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
               "oce", "here","reshape2", "viridis", "export", "rnaturalearth", 
-              "rnaturalearthdata", "forcats","sf")
+              "rnaturalearthdata", "forcats","sf", "geosphere")
 ipak(packages) 
 
 # Create a base Layer map of the core sampled areas, as per JL and LR meeting on 2023-02-16
@@ -123,10 +123,11 @@ SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
   mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
   mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 12) %>% 
-  mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
-  mutate(long_dif = long_rad - shift(long_rad)) %>% 
+#  mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
+#  mutate(long_dif = long_rad - shift(long_rad)) %>% 
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
-  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
+  mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>%
+#  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
 
