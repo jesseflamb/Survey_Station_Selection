@@ -20,13 +20,18 @@ ipak <- function(pkg){
 packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
               "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
               "oce", "here","reshape2", "viridis", "export", "rnaturalearth", 
-              "rnaturalearthdata", "forcats")
+              "rnaturalearthdata", "forcats","sf")
 ipak(packages) 
 
 # Create a base Layer map of the core sampled areas, as per JL and LR meeting on 2023-02-16
 # Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
+
+# Read in "late-larval core" region used for larval time-series, as shapefile:
+# convert to Lat/lon projection.
+shp.mp <- read_sf(dsn=here("Data","mapping_data","NewLateLarvalPolygon"),layer="Survey_poly")
+shp.mp.LL<-st_transform(shp.mp,CRS("+proj=longlat"))
 
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
   mutate(Gear.Sampled = str_replace(Gear.Sampled,"NEU","")) %>% 
@@ -74,9 +79,14 @@ GOARegion_Map_New <- ggplot()+
                breaks=c(-200),
                linewidth=c(0.5),
                colour="black")+
+  
+  # add late larval "core" polygon
+  geom_sf(data = shp.mp.LL, color="green", fill=NA, linewidth = 1.5) +
+  
   # add coastline
   geom_sf(data = world)+
   coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+  
   
   #Plot WGOA points
   geom_point(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., shape = Gear.Sampled), size = 1)+ 
