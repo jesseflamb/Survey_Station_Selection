@@ -122,9 +122,15 @@ SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(CTD_hrs = ifelse(Gear.Sampled == "CTD",0.5,0)) %>% 
   mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
   mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
+<<<<<<< Updated upstream
   mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 12) %>% 
 #  mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
 #  mutate(long_dif = long_rad - shift(long_rad)) %>% 
+=======
+  mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 11) %>% # Variable
+  mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
+  mutate(long_dif = long_rad - shift(long_rad)) %>% 
+>>>>>>> Stashed changes
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
   mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>%
 #  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
@@ -136,7 +142,7 @@ SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
 
 
 # Next: rearrange data to calculate time to travel to and complete station operations
-shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% 
+shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% # SRTdata will be replaced by filtered stations above
   unite("Station",Station:Grid.ID, sep = "_", remove = FALSE) %>% 
   select(Station,Steam_T,Station_Time) %>% 
   gather(key="Ops", Time_Dur, -Station) %>% arrange(Station) %>% 
@@ -154,8 +160,6 @@ ShipsLog <- shipslog %>% group_by(Station, Grid.ID) %>%
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Grid.ID,Sta_Time)
                                           
-
-ShipsLog
 
 ```
 

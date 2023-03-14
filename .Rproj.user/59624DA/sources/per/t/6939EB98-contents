@@ -20,13 +20,18 @@ ipak <- function(pkg){
 packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
               "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
               "oce", "here","reshape2", "viridis", "export", "rnaturalearth", 
-              "rnaturalearthdata", "forcats")
+              "rnaturalearthdata", "forcats","sf")
 ipak(packages) 
 
 # Create a base Layer map of the core sampled areas, as per JL and LR meeting on 2023-02-16
 # Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
+
+# Read in "late-larval core" region used for larval time-series, as shapefile:
+# convert to Lat/lon projection.
+shp.mp <- read_sf(dsn=here("Data","mapping_data","NewLateLarvalPolygon"),layer="Survey_poly")
+shp.mp.LL<-st_transform(shp.mp,CRS("+proj=longlat"))
 
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
   mutate(Gear.Sampled = str_replace(Gear.Sampled,"NEU","")) %>% 
@@ -74,9 +79,14 @@ GOARegion_Map_New <- ggplot()+
                breaks=c(-200),
                linewidth=c(0.5),
                colour="black")+
+  
+  # add late larval "core" polygon
+  geom_sf(data = shp.mp.LL, color="green", fill=NA, linewidth = 1.5) +
+  
   # add coastline
   geom_sf(data = world)+
   coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+  
   
   #Plot WGOA points
   geom_point(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., shape = Gear.Sampled), size = 1)+ 
@@ -112,7 +122,7 @@ SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(CTD_hrs = ifelse(Gear.Sampled == "CTD",0.5,0)) %>% 
   mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
   mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
-  mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 12) %>% 
+  mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 11) %>% # Variable
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
@@ -125,7 +135,7 @@ SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
 
 
 # Next: rearrange data to calculate time to travel to and complete station operations
-shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% 
+shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% # SRTdata will be replaced by filtered stations above
   unite("Station",Station:Grid.ID, sep = "_", remove = FALSE) %>% 
   select(Station,Steam_T,Station_Time) %>% 
   gather(key="Ops", Time_Dur, -Station) %>% arrange(Station) %>% 
@@ -143,8 +153,6 @@ ShipsLog <- shipslog %>% group_by(Station, Grid.ID) %>%
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Grid.ID,Sta_Time)
                                           
-
-ShipsLog
 
 ```
 
