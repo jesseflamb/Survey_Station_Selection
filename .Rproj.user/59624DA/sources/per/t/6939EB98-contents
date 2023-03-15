@@ -20,7 +20,7 @@ ipak <- function(pkg){
 packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
               "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
               "oce", "here","reshape2", "viridis", "export", "rnaturalearth", 
-              "rnaturalearthdata", "forcats","sf")
+              "rnaturalearthdata", "forcats","sf", "geosphere")
 ipak(packages) 
 
 # Create a base Layer map of the core sampled areas, as per JL and LR meeting on 2023-02-16
@@ -34,9 +34,11 @@ shp.mp <- read_sf(dsn=here("Data","mapping_data","NewLateLarvalPolygon"),layer="
 shp.mp.LL<-st_transform(shp.mp,CRS("+proj=longlat"))
 
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
-  mutate(Gear.Sampled = str_replace(Gear.Sampled,"NEU","")) %>% 
-  mutate(Gear.Sampled = str_replace(Gear.Sampled,", CTD","CTD")) %>% 
-  mutate(Gear.Sampled = str_replace(Gear.Sampled,"CALVETCTD","CALVET, CTD")) 
+  # mutate(Gear.Sampled = str_replace(Gear.Sampled,"NEU","")) %>% 
+  # mutate(Gear.Sampled = str_replace(Gear.Sampled,", CTD","CTD")) %>% 
+ # mutate(Gear.Sampled = str_replace(Gear.Sampled,"CALVETCTD","CALVET, CTD")) 
+
+#wGOAdata <- WGOAdata %>% filter(Station %in% LLCvec)
 
 
   
@@ -81,7 +83,7 @@ GOARegion_Map_New <- ggplot()+
                colour="black")+
   
   # add late larval "core" polygon
-  geom_sf(data = shp.mp.LL, color="green", fill=NA, linewidth = 1.5) +
+ # geom_sf(data = shp.mp.LL, color="green", fill=NA, linewidth = 1.5) +
   
   # add coastline
   geom_sf(data = world)+
@@ -114,27 +116,31 @@ The plot above represents the sampling plan developed from the DY19-05 survey, w
 ```{r station Spatial Limit, echo=TRUE, warning=FALSE, message=FALSE}
 ### Create Station & Runtime Dataset, mirroring "Final Station Runtime" Spreadsheets
 
-# First, Create data.frame that mirrors "Final Station Runtime"
-SRTdata <- WGOAdata %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU",0)) %>% 
+# Filter out Stations 
+# LLC = "late larval core" from polygon plot above
+LLCvec <- c(0,60:225,271)
+LLCsta <- WGOAdata %>% filter(Station %in% LLCvec)
+
+# 1. Create data.frame that mirrors "Final Station Runtime"
+SRTdata <- LLCsta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","")) %>% 
   mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","CTD")) %>%  
   mutate(Bongo_hrs = ifelse(Station > 0, 0.33,0)) %>% 
   mutate(CTD_hrs = ifelse(Gear.Sampled == "CTD",0.5,0)) %>% 
   mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
   mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
+#<<<<<<< Updated upstream
   mutate(Station_Time = lubridate::dhours(rowSums(.[6:9]))) %>% mutate(Ship_Speed = 11) %>% # Variable
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
+#>>>>>>> Stashed changes
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
-  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
+  mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>%
+#  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
 
-# Filter out Stations 
-# Code TBD
-
-
-# Next: rearrange data to calculate time to travel to and complete station operations
+# 2. rearrange data to calculate time to travel to and complete station operations
 shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% # SRTdata will be replaced by filtered stations above
   unite("Station",Station:Grid.ID, sep = "_", remove = FALSE) %>% 
   select(Station,Steam_T,Station_Time) %>% 
@@ -142,26 +148,55 @@ shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T) %>% # SR
   separate(Station, c("Station","Grid.ID"), sep = "_") %>% 
   transform(Station = as.numeric(Station)) %>% arrange(Station) 
 shipslog <- na.omit(shipslog)
-
-
-# Choose Departure Date
+# 3. Choose Departure Date
 depart <- ymd_hm("2023-05-14 12:00")
-
-# Create a table of Station Completion Times 
+# 4. Create a table of Station Completion Times 
 ShipsLog <- shipslog %>% group_by(Station, Grid.ID) %>% 
   reframe(Time_Dur = lubridate::dseconds(sum(Time_Dur)))  %>% 
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Grid.ID,Sta_Time)
-                                          
+
+# Plot filtered station map with survey track
+StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+ # add 50m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z), breaks=c(-100), linewidth=c(0.5), colour="darkgrey")+ # add 100m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.3), colour="black")+ # add 200m contour
+  geom_sf(data = world)+coord_sf(xlim = lons, ylim = lats, expand = FALSE)+ # add coastline
+  #Plot points & station track
+  geom_point(data = SRTdata, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
+  geom_path(data = SRTdata, mapping = aes(LON, LAT), linewidth = 0.25) +  
+  geom_text(data = SRTdata, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
+  theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) 
+
+StaMapF
+
+#ggsave("SpringLarval_ST60_ST225_2023_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+
 
 ```
 
-## Including Plots
+## Potential Station spatial and Temporal Layouts
 
-You can also embed plots, for example:
+Below we will show potential station maps (station plots, w/ lines from station to station), along with time tables for each station map.  
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+### Function Below for use to compare multiple maps at the same time. 
+
+### Create Station Mapping function.  This will use filtered station data from the entire dataset (WGOA Data).  
+
+# StaMapF <- function(z,zz), where z= station position data & zz = name of filtered data, (i.e. EOS = "every other station")
+# StaMapF mirrors same format as station and gear maps above w/ lines linking stations 
+StaMapF <- function(zed,zz){ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+ # add 50m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z), breaks=c(-100), linewidth=c(0.5), colour="darkgrey")+ # add 100m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.5), colour="black")+ # add 200m contour
+  geom_sf(data = world)+coord_sf(xlim = lons, ylim = lats, expand = FALSE)+ # add coastline
+  #Plot Z points
+  geom_point(data = z, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
+  geom_path(data = z, mapping = aes(LON, LAT,)) +  
+  geom_text(data = z, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
+  theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) }
+                                          
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
