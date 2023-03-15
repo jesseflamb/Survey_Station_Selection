@@ -34,11 +34,6 @@ shp.mp <- read_sf(dsn=here("Data","mapping_data","NewLateLarvalPolygon"),layer="
 shp.mp.LL<-st_transform(shp.mp,CRS("+proj=longlat"))
 
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
-  # mutate(Gear.Sampled = str_replace(Gear.Sampled,"NEU","")) %>% 
-  # mutate(Gear.Sampled = str_replace(Gear.Sampled,", CTD","CTD")) %>% 
- # mutate(Gear.Sampled = str_replace(Gear.Sampled,"CALVETCTD","CALVET, CTD")) 
-
-#wGOAdata <- WGOAdata %>% filter(Station %in% LLCvec)
 
 
   
@@ -58,7 +53,7 @@ reg = subset(reg, region %in% c('USSR', 'USA'))
 reg$long = (360 - reg$long)*-1
 # set map limits, whole region
 lons = c(-167, -149) #-140 = large map
-lats = c(53, 62) # 52 = large map
+lats = c(53, 60.25) # 52 = large map
 
 ######################################
 # make plot
@@ -119,10 +114,16 @@ The plot above represents the sampling plan developed from the DY19-05 survey, w
 # Filter out Stations 
 # LLC = "late larval core" from polygon plot above
 LLCvec <- c(0,60:225,271)
-LLCsta <- WGOAdata %>% filter(Station %in% LLCvec)
+
+# Station Selection Through Omission (Example Below)
+
+AllSta <- c(0:271) # All Possible Stations
+OmitSta <- c(0,60:225,271) # Stations to leave out
+FinalSta <- setdiff(AllSta,LLCvec) # All stations left
+Sta <- WGOAdata %>% filter(Station %in% FinalSta)
 
 # 1. Create data.frame that mirrors "Final Station Runtime"
-SRTdata <- LLCsta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
+SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","")) %>% 
   mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","CTD")) %>%  
   mutate(Bongo_hrs = ifelse(Station > 0, 0.33,0)) %>% 
@@ -135,7 +136,7 @@ SRTdata <- LLCsta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
 #>>>>>>> Stashed changes
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
-  mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>%
+  mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>% # distGEO does what code below does in base
 #  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
@@ -156,7 +157,7 @@ ShipsLog <- shipslog %>% group_by(Station, Grid.ID) %>%
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Grid.ID,Sta_Time)
 
-# Plot filtered station map with survey track
+# 5. Plot filtered station map with survey track
 StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+ # add 50m contour
   geom_contour(data = bf, aes(x=x, y=y, z=z), breaks=c(-100), linewidth=c(0.5), colour="darkgrey")+ # add 100m contour
   geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.3), colour="black")+ # add 200m contour
@@ -165,12 +166,12 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   geom_point(data = SRTdata, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
   geom_path(data = SRTdata, mapping = aes(LON, LAT), linewidth = 0.25) +  
   geom_text(data = SRTdata, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
-  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ ggtitle("Late Larval Core to 225") +
   theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) 
 
 StaMapF
 
-#ggsave("SpringLarval_ST60_ST225_2023_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+ggsave("SpringLarval_ST60_ST225_2023_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
 
 
 ```
@@ -194,7 +195,7 @@ StaMapF <- function(zed,zz){ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),
   geom_point(data = z, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
   geom_path(data = z, mapping = aes(LON, LAT,)) +  
   geom_text(data = z, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
-  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ 
   theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) }
                                           
 ```
