@@ -33,7 +33,10 @@ class(world)
 shp.mp <- read_sf(dsn=here("Data","mapping_data","NewLateLarvalPolygon"),layer="Survey_poly")
 shp.mp.LL<-st_transform(shp.mp,CRS("+proj=longlat"))
 
-WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
+WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
+
+# Count Gear.Sampled
+table(WGOAdata$Gear.Sampled)
 
 
   
