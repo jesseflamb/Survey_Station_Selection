@@ -2,3 +2,13 @@
 .Rhistory
 .RData
 .Ruserdata
+
+.Rproj.user/
+
+*_cache/
+/cache/
+
+.Rapp.history
+
+*.utf8.md
+*.knit.md
