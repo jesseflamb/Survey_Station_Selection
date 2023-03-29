@@ -39,8 +39,6 @@ WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutio
 # Count Gear.Sampled
 table(WGOAdata$Gear.Sampled)
 
-
-  
 WGOAdata$Longitude..W. <- WGOAdata$Longitude..W.*-1
 # get bathymetry data
 b = getNOAA.bathy(lon1 = -166, lon2 = -140, lat1 = 52, lat2 = 62, 
