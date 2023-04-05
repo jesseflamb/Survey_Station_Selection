@@ -118,7 +118,7 @@ The plot above represents the sampling plan developed from the DY19-05 survey, w
 LLCvec <- c(0,60:225,271)
 Scen1<-c(0,24:28,44:38,53:59,60:179, 180, 181,201:197,208:213, 216,218,220,228:225,
          234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
-
+ScenName <- "CorePlusCoarseOutside"
 Scenario<-Scen1
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"=1:length(Scenario))
 
@@ -175,12 +175,12 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   geom_point(data = SRTdata, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
   geom_path(data = SRTdata, mapping = aes(LON, LAT), linewidth = 0.25) +  
   geom_text(data = SRTdata, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
-  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ ggtitle("Late Larval Core to 225") +
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ ggtitle(paste(ScenName,length(Scenario),"Stns")) +
   theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) 
 
 StaMapF
 
-ggsave("SpringLarval_ST60_ST225_2023_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
 
 
 ```
