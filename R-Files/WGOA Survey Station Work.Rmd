@@ -115,7 +115,7 @@ The plot above represents the sampling plan developed from the DY19-05 survey, w
 
 # Filter out Stations 
 # LLC = "late larval core" from polygon plot above
-LLCvec <- c(0,60:225,271)
+#LLCvec <- c(0,60:225,271)
 Scen1<-c(0,24:28,44:38,53:59,60:179, 180, 181,201:197,208:213, 216,218,220,228:225,
          234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
 ScenName <- "CorePlusCoarseOutside"
@@ -128,7 +128,7 @@ FinalSta<-data.frame("Station"=Scenario,"Stn_Order"=1:length(Scenario))
 # OmitSta <- c(0,60:225,271) # Stations to leave out
 # FinalSta <- setdiff(AllSta,LLCvec) # All stations left
 Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
-  filter(Station %in% FinalSta$Station) %>%
+  filter(Station %in% FinalSta$Station) %>%  
   arrange(Stn_Order)
 
 # 1. Create data.frame that mirrors "Final Station Runtime"
@@ -140,7 +140,7 @@ SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
   mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
 #<<<<<<< Updated upstream
-  mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,CTD_hrs,CalVET_hrs,CalCTD_hrs))))) %>% mutate(Ship_Speed = 11) %>% # Variable
+  mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,CTD_hrs,CalVET_hrs,CalCTD_hrs))))) %>% mutate(Ship_Speed = 11) %>% # Ship speed is Variable
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
 #>>>>>>> Stashed changes
