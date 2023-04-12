@@ -17,11 +17,16 @@ ipak(packages)
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
 
-WGOAdata <- read.csv(here("Data","EcoFOCI_GOAIERP_spreadsheet.csv")) #All Stations Possible
+#### WGOA MASTER STATION LIST MAPS
 
-WGOAdata$LON <- WGOAdata$LON*-1
+# GOA-IERP Master List, w/ Line 8 Added (not on orginial list)
+WGOAMaster <- read.csv(here("Data","EcoFOCI_GOAIERP_GEARspreadsheet.csv")) #GOA-IERP Stations
+WGOAMaster <- WGOAMaster %>% arrange(y) %>% mutate(St_Ord = 1:length(GRID.STA))
+WGOAMaster$LON <- WGOAMaster$LON*-1 # make LON negative (just once!!!)
+
+
 # get bathymetry data
-b = getNOAA.bathy(lon1 = -165, lon2 = -146, lat1 = 51.5, lat2 = 62, 
+b = getNOAA.bathy(lon1 = -165.5, lon2 = -144.5, lat1 = 51.5, lat2 = 62, 
                   resolution = 15)
 ## Querying NOAA database ...
 ## This may take seconds to minutes, depending on grid size
@@ -34,13 +39,13 @@ reg = subset(reg, region %in% c('USSR', 'USA'))
 # convert lat longs
 reg$long = (360 - reg$long)*-1
 # set map limits, whole region
-lons = c(-165, -146) #-140 = large map
-lats = c(51.5, 62) # 52 = large map
+lons = c(-165.5, -144.5) 
+lats = c(51.5, 62) 
 
 ######################################
 # make plot
 GOARegion_Map_New <- ggplot()+
-   # add 50m contour
+  # add 50m contour
   geom_contour(data = bf, 
                aes(x=x, y=y, z=z),
                breaks=c(-50),
@@ -63,8 +68,8 @@ GOARegion_Map_New <- ggplot()+
   coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
   
   #Plot WGOA points
-  geom_point(data = WGOAdata, mapping = aes(LON, LAT), size = 1)+
-  geom_text(data = WGOAdata, mapping = aes(LON, LAT, label = GRID.STA ), 
+  geom_point(data = WGOAMaster, mapping = aes(LON, LAT), size = 1)+
+  geom_text(data = WGOAMaster, mapping = aes(LON, LAT, label = St_Ord ), 
             nudge_y = -0.05, size = 2.5)+ 
   # formatting
   scale_shape_discrete()+
@@ -72,7 +77,13 @@ GOARegion_Map_New <- ggplot()+
   xlab("Longitude")+
   ylab("Latitude")+
   theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black"))
- 
+
 GOARegion_Map_New
 
-ggsave("SpringLarval_AllSTA_2019_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+ggsave("GOA_IERP_AllSta_&_LINE8.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+
+
+
+### Create .gpx in table
+
+WGOAgpx <- WGOAMaster %>% 
