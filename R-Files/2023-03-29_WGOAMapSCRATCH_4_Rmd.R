@@ -84,6 +84,3 @@ ggsave("GOA_IERP_AllSta_&_LINE8.png",path = here("Docs"), height = 8.5, width = 
 
 
 
-### Create .gpx in table
-
-WGOAgpx <- WGOAMaster %>% 

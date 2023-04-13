@@ -133,14 +133,18 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 
 # 1. Create data.frame that mirrors "Final Station Runtime"
 SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","")) %>% 
-  mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","CTD")) %>%  
-  mutate(Bongo_hrs = ifelse(Station > 0, 0.33,0)) %>% 
-  mutate(CTD_hrs = ifelse(Gear.Sampled == "CTD",0.5,0)) %>% 
-  mutate(CalVET_hrs = ifelse(Gear.Sampled == "CALVET", 0.33,0)) %>% 
-  mutate(CalCTD_hrs = ifelse(Gear.Sampled == "CALVET, CTD",0.83,0)) %>% 
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "","BONGO")) %>% 
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","BONGO")) %>% 
+  mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","BONGO,CTD")) %>%
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CTD","BONGO,CTD")) %>% 
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CALVET","BONGO,CALVET")) %>% 
+  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CALVET, CTD","BONGO,CALVET,CTD")) %>% 
+  mutate(Bongo_hrs = ifelse(Gear.Sampled == "BONGO", 0.33,0)) %>% # BONGO at all stations
+  mutate(BON_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CTD",0.83,0)) %>% 
+  mutate(BON_CalVET_hrs = ifelse(Gear.Sampled == "BONGO,CALVET", 0.66,0)) %>% 
+  mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CALVET,CTD",1.16,0)) %>% 
 #<<<<<<< Updated upstream
-  mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,CTD_hrs,CalVET_hrs,CalCTD_hrs))))) %>% mutate(Ship_Speed = 11) %>% # Ship speed is Variable
+  mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,BON_CTD_hrs,BON_CalVET_hrs,BON_Cal_CTD_hrs))))) %>% mutate(Ship_Speed = 11) %>% # Ship speed is Variable
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
 #>>>>>>> Stashed changes
