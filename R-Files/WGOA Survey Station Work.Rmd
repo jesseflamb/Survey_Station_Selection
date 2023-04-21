@@ -61,34 +61,20 @@ lats = c(53, 60.25) # 52 = large map
 # make plot
 GOARegion_Map_New <- ggplot()+
    # add 50m contour
-  geom_contour(data = bf, 
-               aes(x=x, y=y, z=z),
-               breaks=c(-50),
-               linewidth=c(0.5),
-               colour="light grey")+
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+
   # add 100m contour
-  geom_contour(data = bf, 
-               aes(x=x, y=y, z=z),
-               breaks=c(-100),
-               linewidth=c(0.5),
-               colour="darkgrey")+
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-100),linewidth=c(0.5),colour="darkgrey")+
   # add 200m contour
-  geom_contour(data = bf, 
-               aes(x=x, y=y, z=z),
-               breaks=c(-200),
-               linewidth=c(0.5),
-               colour="black")+
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.5),colour="black")+
   
   # add late larval "core" polygon
  # geom_sf(data = shp.mp.LL, color="green", fill=NA, linewidth = 1.5) +
-  
   # add coastline
   geom_sf(data = world)+
   coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
-  
-  
   #Plot WGOA points
-  geom_point(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., shape = Gear.Sampled), size = 1)+ 
+  geom_point(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., shape = Gear.Sampled), 
+             size = 1, show.legend = FALSE)+ 
   #Delete "shape..." for just stations
   geom_text(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., label = Station ), 
             nudge_y = -0.08, size = 2.5)+ 
@@ -99,8 +85,8 @@ GOARegion_Map_New <- ggplot()+
   theme_bw()+
   xlab("Longitude")+
   ylab("Latitude")+
-  theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) 
-  
+  theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black"))
+
  GOARegion_Map_New
 
 ggsave("SpringLarval_AllSTA_2023_Gear&StationNo.png",path = here("Docs"), height = 8.5, width = 11, units = "in")

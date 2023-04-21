@@ -1,11 +1,9 @@
 ---
-title: "WGOA Survey Station-At Sea"
+title: "WGOA Survey Station-At Sea Outlook"
 author: "Jesse F Lamb"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-
-
 
 ```{r Setup & Opening Table, message=FALSE, warning=FALSE, include=FALSE}
 
