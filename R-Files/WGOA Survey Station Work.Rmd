@@ -117,6 +117,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
   filter(Station %in% FinalSta$Station) %>%  
   arrange(Stn_Order)
 
+
 # 1. Create data.frame that mirrors "Final Station Runtime"
 SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "","BONGO")) %>% 
@@ -173,30 +174,23 @@ StaMapF
 ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
 
 
+
 ```
 
-## Potential Station spatial and Temporal Layouts
+Create Station Table file from "SRTdata" above, with a column listing station sampling priority: "A" = high, "B" = moderate, "C" = low.  This will allow easy filtering at sea if/when we lose time for expedient decision making.  
+```{r Station Table,echo=TRUE, warning=FALSE, message=FALSE }
 
-Below we will show potential station maps (station plots, w/ lines from station to station), along with time tables for each station map.  
+# Create table, remove all CTDs not part of transects; create "A,B,C" station vectors
 
-```{r pressure, echo=FALSE}
-### Function Below for use to compare multiple maps at the same time. 
+# A stations = Priority
+A <- c(77:166,169,171,173,175,177,181,200) # experimenting, not real 
+B <- c() # fill in 
+C <- c(24,25,68,69,84,60,142,249:269)
+WGOA_StaTable <- SRTdata %>% select(Station, Grid.ID,LAT,LON,Gear.Sampled) %>% 
+  mutate(Gear.Sampled = ifelse(Station == 39,"BONGO",Gear.Sampled)) %>% 
+    mutate(Gear.Sampled = ifelse(Station == 93,"BONGO",Gear.Sampled)) %>% 
+   mutate(Gear.Sampled = ifelse(Station == 119,"BONGO,CALVET",Gear.Sampled)) %>% 
+  mutate(Sta_Pri = if_else(Station %in% A,"A","")) %>%  mutate(Sta_Pri = if_else(Station %in% C,"C",""))
 
-### Create Station Mapping function.  This will use filtered station data from the entire dataset (WGOA Data).  
 
-# StaMapF <- function(z,zz), where z= station position data & zz = name of filtered data, (i.e. EOS = "every other station")
-# StaMapF mirrors same format as station and gear maps above w/ lines linking stations 
-StaMapF <- function(zed,zz){ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+ # add 50m contour
-  geom_contour(data = bf, aes(x=x, y=y, z=z), breaks=c(-100), linewidth=c(0.5), colour="darkgrey")+ # add 100m contour
-  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.5), colour="black")+ # add 200m contour
-  geom_sf(data = world)+coord_sf(xlim = lons, ylim = lats, expand = FALSE)+ # add coastline
-  #Plot Z points
-  geom_point(data = z, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
-  geom_path(data = z, mapping = aes(LON, LAT,)) +  
-  geom_text(data = z, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
-  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ 
-  theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) }
-                                          
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

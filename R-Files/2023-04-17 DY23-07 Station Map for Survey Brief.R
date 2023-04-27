@@ -104,3 +104,42 @@ WGOALarge <- ggplot()+
  
 WGOALarge
 ggsave("DY23-07 Map for Survey LARGE.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+
+#### CTD Stations  ####
+
+#### Large Overall Map ####
+
+WGOA_CTD <- WGOAdata %>% filter(Gear.Sampled == "CTD" | Gear.Sampled == "CALVET, CTD")
+write.csv(WGOA_CTD, file = "DY23-07 Current CTD locations.csv")
+
+lons = c(-164.5, -149) #-140 = large map
+lats = c(53.5, 59.5) # 52 = large map
+
+WGOA_CTDplot <- ggplot()+
+  # add 50m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+
+  # add 100m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-100),linewidth=c(0.5),colour="darkgrey")+
+  # add 200m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.2),colour="black")+
+  
+  geom_sf(data = world) + coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+  #Plot WGOA points
+  geom_point(data = WGOA_CTD, mapping = aes(Longitude..W., Latitude.N.), #, shape = Gear.Sampled
+             size = 1, show.legend = FALSE)+ 
+  #Delete "shape..." for just stations
+  geom_text(data = WGOA_CTD, mapping = aes(Longitude..W., Latitude.N., label = Station ), 
+            nudge_y = -0.08, size = 3)+ 
+  scale_shape_discrete()+
+  labs(title = "DY23-07: Current CTD Stations")+
+  theme_bw()+ xlab("Longitude")+ ylab("Latitude")+
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 18))+
+  theme(axis.title = element_text(size = 20))+  
+  theme(axis.text.x=element_text(size=15, color = "black"), axis.text.y = element_text(size=15, color = "black"))+
+  theme(legend.position = "none")+
+  annotate("text", x=-153.495,y=57.4912,size = 6, label = "Kodiak Is.")
+
+WGOA_CTDplot
+ggsave("DY19-05 CTD data and plot for Reference.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+
+
