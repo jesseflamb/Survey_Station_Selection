@@ -35,22 +35,23 @@ Below are a Station Table and Map of the rest of the Survey
 
 
 # Load Station Data Table from DY19-05
-WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
+#WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
+WGOAdata <- read.csv(here("Data","DY23-07_A&B_priority.csv"))
 
 ### Create Station & Runtime Dataset ############
 
 #All Stations
-AllSta<-c(0,24:28,44:38,53:59,60:179, 180, 181,201:197,208:213, 216,218,220,228:225,
-         234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
+AllSta<- c(0,1:9,28:24,38:44,59:53,68:181,201:197,213:239,245:243,249:251,
+           257:255,261:263,267,269,271)
 
 #Stations by Day/Interuptions
 
 # Completed Stations
-CompleteScenL <- length(c(24:28,44:38,53:59, 60:71)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 
 # Sttaions Remaining
-StaTDL<-c(72:179, 180, 181,201:197,208:213, 216,218,220,228:225,
-         234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
+StaTDL<-c(0,1:9,28:24,38:44,59:53,68:181,201:197,213:239,245:243,249:251,
+           257:255,261:263,267,269,271)
 ScenName <- "Stations Remaining"
 Scenario<-StaTDL # Always Change to Updated Scen
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= (CompleteScenL+1):(CompleteScenL+length(Scenario)))
@@ -62,15 +63,15 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
   arrange(Stn_Order)
 
 # 2. Choose Departure Date
-#depart <- ymd_hm("2023-05-14 12:00")
-depart <- lubridate::now(tzone = "America/Adak") # Alaska time
+depart <- ymd_hm("2023-05-14 12:00") # for pre-survey calculations
+# depart <- lubridate::now(tzone = "America/Adak") # Alaska time, for at sea calculations
 
 # Variable List that can Change Time On & Between Stations
 # Gear Time : Lines 77 - 80
 # Ship Speed: Line 83
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"
-SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
+SRTdata <- Sta %>% #rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "","BONGO")) %>% 
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","BONGO")) %>% 
   mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","BONGO,CTD")) %>%
@@ -101,12 +102,19 @@ shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T, Stn_Orde
   transform(Station = as.numeric(Station)) %>% arrange(Stn_Order) 
 shipslog <- na.omit(shipslog)
 
-# 4. Create a table of Station Completion Times 
+# 5. Create a table of Station Completion Times 
 ShipsLog <- shipslog %>% group_by(Stn_Order, Station, Grid.ID) %>% 
   reframe(Time_Dur = lubridate::dseconds(sum(Time_Dur)))  %>% 
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Stn_Order, Grid.ID,Sta_Time) %>% 
   rename("Station"="Stn_Order","Grid Station"="Grid.ID","Est.Station Time"="Sta_Time")
+
+#6. Create a table to link Gear.Sampled for daily stations in ShipsLog to know Operations at each station
+Sta_GearSamp <- SRTdata %>% select(Station,Grid.ID,Gear.Sampled) %>% 
+filter(Station %in% FinalSta$Station) %>% select(Grid.ID,Gear.Sampled) %>% 
+  rename("Grid Station"="Grid.ID")
+
+ShipsLog <- left_join(ShipsLog,Sta_GearSamp, by = "Grid Station")
 
 # Output Station Table, include: Ships Log
 kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>% 
@@ -118,7 +126,7 @@ kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>%
 
 ```{r Station Track Map,out.width = "100%", fig.align = "center", echo=FALSE, message=FALSE, warning=FALSE}
 
-SRTdata$LON <- SRTdata$LON*-1
+#SRTdata$LON <- SRTdata$LON*-1
 # get bathymetry data
 
 b = getNOAA.bathy(lon1 = min(SRTdata$LON)+-1, lon2 = max(SRTdata$LON)+1, 

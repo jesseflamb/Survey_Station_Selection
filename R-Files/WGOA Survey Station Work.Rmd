@@ -102,10 +102,12 @@ The plot above represents the sampling plan developed from the DY19-05 survey, w
 # Filter out Stations 
 # LLC = "late larval core" from polygon plot above
 #LLCvec <- c(0,60:225,271)
-Scen1<-c(0,24:28,44:38,53:59,60:179, 180, 181,201:197,208:213, 216,218,220,228:225,
-         234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
-ScenName <- "CorePlusCoarseOutside"
-Scenario<-Scen1
+AllSTA <- WGOA_StaNoC$Station #See line 202 below
+#Scen1<-c(0,24:28,44:38,53:59,60:179, 180, 181,201:197,208:213, 216,218,220,228:225,
+#         234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
+
+ScenName <- "All A & B Priority Stations"
+Scenario<-AllSTA
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"=1:length(Scenario))
 
 # Station Selection Through Omission (Example Below)
@@ -119,7 +121,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 
 
 # 1. Create data.frame that mirrors "Final Station Runtime"
-SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
+SRTdata <- Sta %>% #rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "","BONGO")) %>% 
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","BONGO")) %>% 
   mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","BONGO,CTD")) %>%
@@ -142,7 +144,7 @@ SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>%
   mutate(Steam_T = lubridate::dhours(Steam_T))
 
 # 2. rearrange data to calculate time to travel to and complete station operations
-shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T, Stn_Order) %>% # SRTdata will be replaced by filtered stations above
+shipslog <- SRTdata %>% select(Station, Grid.ID,Station_Time, Steam_T, Stn_Order) %>% # SRTdata will be replaced by filtered stations above
   unite("Station",Station:Grid.ID, sep = "_", remove = FALSE) %>% 
   select(Station,Steam_T,Station_Time,Stn_Order) %>% 
   gather(key="Ops", Time_Dur, -Station,-Stn_Order) %>% arrange(Station) %>% 
@@ -169,9 +171,9 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ ggtitle(paste(ScenName,length(Scenario),"Stns")) +
   theme(axis.text.x=element_text(size=10, color = "black"), axis.text.y = element_text(size=10, color = "black")) 
 
-StaMapF
+#StaMapF
 
-ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
+#ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
 
 
 
@@ -181,16 +183,63 @@ Create Station Table file from "SRTdata" above, with a column listing station sa
 ```{r Station Table,echo=TRUE, warning=FALSE, message=FALSE }
 
 # Create table, remove all CTDs not part of transects; create "A,B,C" station vectors
+# Note: Station 0 = Dutch Harbor, 271 = Kodiak Pier
 
-# A stations = Priority
-A <- c(77:166,169,171,173,175,177,181,200) # experimenting, not real 
-B <- c() # fill in 
-C <- c(24,25,68,69,84,60,142,249:269)
+# Below is an EXAMPLE to get code to run and plot proper (4/27/23)
+A <- c(0,24:28, 53:59, 77:84,93:100,108:113,120:125,132:141,148:152,160:165,
+       167,169,171,173,175,177,208:239,271) 
+B <- c(1:9, 38:44,68:76,85:92,101:107,114:119,126:131,142:147,153:159,166,168,170,
+       172,174,176,179:181,197:201,243:245,249:251,255:257,261:263,267:269)
+# C = anything not A & B, see line 200 below
+
+
 WGOA_StaTable <- SRTdata %>% select(Station, Grid.ID,LAT,LON,Gear.Sampled) %>% 
   mutate(Gear.Sampled = ifelse(Station == 39,"BONGO",Gear.Sampled)) %>% 
     mutate(Gear.Sampled = ifelse(Station == 93,"BONGO",Gear.Sampled)) %>% 
    mutate(Gear.Sampled = ifelse(Station == 119,"BONGO,CALVET",Gear.Sampled)) %>% 
-  mutate(Sta_Pri = if_else(Station %in% A,"A","")) %>%  mutate(Sta_Pri = if_else(Station %in% C,"C",""))
+  mutate(Sta_Pri = if_else(Station %in% A,"A",if_else(Station %in% B,"B","C"))) 
+
+# Remove C priority Stations
+WGOA_StaTable <- WGOA_StaTable %>% filter(Sta_Pri != "C")
+write.csv(WGOA_StaNoC, here("Data","DY23-07_A&B_priority.csv"))
+
+```
+
+## Station Priority Map
 
 
+```{r Station Track Map,out.width = "100%", fig.align = "center", echo=FALSE, message=FALSE, warning=FALSE}
+
+WGOA_StaTable$LON <- WGOA_StaTable$LON*-1
+# get bathymetry data
+
+b = getNOAA.bathy(lon1 = min(WGOA_StaTable$LON)+-1, lon2 = max(WGOA_StaTable$LON)+1, 
+                  lat1 = min(WGOA_StaTable$LAT)+-1, lat2 = max(WGOA_StaTable$LAT)+1, 
+                 resolution = 15)
+# convert bathymetry to data frame
+bf = fortify.bathy(b)
+# set map limits, whole region
+lons = c(min(WGOA_StaTable$LON)+-1, max(WGOA_StaTable$LON)+1) #-140 = large map
+lats = c(min(WGOA_StaTable$LAT)+-1,max(WGOA_StaTable$LAT)+1) # 52 = large map
+
+# Create Color Vector: stoplight
+stpliteCol <- c("green","orange","red")
+
+# Plot filtered station map with survey track
+StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+ # add 50m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z), breaks=c(-100), linewidth=c(0.5), colour="darkgrey")+ # add 100m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.3), colour="black")+ # add 200m contour
+  geom_sf(data = world)+coord_sf(xlim = lons, ylim = lats, expand = FALSE)+ # add coastline
+  #Plot points & station track
+  geom_point(data = WGOA_StaTable, mapping = aes(LON, LAT, shape = Gear.Sampled, color= Sta_Pri), size = 2)+ 
+  #geom_path(data = WGOA_StaTable, mapping = aes(LON, LAT), linewidth = 0.25) +  
+  geom_text(data = WGOA_StaTable, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
+  scale_color_manual(values = stpliteCol)+
+    ggtitle(paste(ScenName,length(Scenario),"Stations")) +
+  theme(axis.text.x=element_text(size=8,hjust = 1,vjust = 1, angle = 45, color = "black"), axis.text.y = element_text(size=8, color = "black")) 
+
+StaMapF
+
+ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
 ```

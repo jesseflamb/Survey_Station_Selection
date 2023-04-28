@@ -103,12 +103,19 @@ shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T, Stn_Orde
   transform(Station = as.numeric(Station)) %>% arrange(Stn_Order) 
 shipslog <- na.omit(shipslog)
 
-# 4. Create a table of Station Completion Times 
+# 5. Create a table of Station Completion Times 
 ShipsLog <- shipslog %>% group_by(Stn_Order, Station, Grid.ID) %>% 
   reframe(Time_Dur = lubridate::dseconds(sum(Time_Dur)))  %>% 
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
   mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Stn_Order, Grid.ID,Sta_Time) %>% 
   rename("Station"="Stn_Order","Grid Station"="Grid.ID","Est.Station Time"="Sta_Time")
+
+#6. Create a table to link Gear.Sampled for daily stations in ShipsLog to know Operations at each station
+Sta_GearSamp <- SRTdata %>% select(Station,Grid.ID,Gear.Sampled) %>% 
+filter(Station %in% FinalSta$Station) %>% select(Grid.ID,Gear.Sampled) %>% 
+  rename("Grid Station"="Grid.ID")
+
+ShipsLog <- left_join(ShipsLog,Sta_GearSamp, by = "Grid Station")
 
 # Output Station Table, include: Ships Log
 kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>% 
