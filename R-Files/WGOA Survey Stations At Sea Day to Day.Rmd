@@ -34,24 +34,22 @@ class(world)
 Below are a Station Table and Map of future stations
 
 ```{r Opening Table, echo=FALSE, warning=FALSE, message=FALSE}
-
-
 # Load Station Data Table from DY19-05
-WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
+WGOAdata <- read.csv(here("Data","DY23-07_A&B_priority.csv"))
 
 ### Create Station & Runtime Dataset ############
 
 ##All Stations
-AllSta<-c(0,24:28,44:38,53:59,60:179, 180, 181,201:197,208:213, 216,218,220,228:225,
-         234:238,239, 245:243,249:251,257:255,261:263, 269:267,271)
+AllSta<-c(0, 1:9, 24:28,38:44,53:59,68:76,77:84,85:92,93:100,101:107,108:113,114:119,120:125,126:131,132:141,142:147,148:152,
+       160:165,153:159,166:177,179:181,197:201,208:239,243:245,249:251,255:257,261:263,267:269,271)
 
 ###Stations by Day/Interruptions
 
 ## Completed Stations
-CompleteScenL <- length(c(24:28,44:38,53:59, 60:71)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 
 ## Stations Remaining
-StaTDL<-c(72:78)
+StaTDL<-c(0:6)
 ScenName <- "Day Plan" # Best 
 Scenario<-StaTDL # Always Change to Updated Scen
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= (CompleteScenL+1):(CompleteScenL+length(Scenario))) 
@@ -67,22 +65,18 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 
 depart <- lubridate::now(tzone = "America/Adak")
 
-# Variable List below that can Change Time On & Between Stations
-# Gear Time : Lines 77 - 80
-# Ship Speed: Line 83
-
 # 3. Create data.frame that mirrors "Final Station Runtime"
-SRTdata <- Sta %>% rename(LAT = Latitude.N., LON = Longitude..W.) %>% 
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "","BONGO")) %>% 
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "NEU","BONGO")) %>% 
-  mutate(Gear.Sampled =  replace(Gear.Sampled,Gear.Sampled == "NEU, CTD","BONGO,CTD")) %>%
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CTD","BONGO,CTD")) %>% 
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CALVET","BONGO,CALVET")) %>% 
-  mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CALVET, CTD","BONGO,CALVET,CTD")) %>% 
+# If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 112,113, & 145
+
+SRTdata <- Sta %>% 
   mutate(Bongo_hrs = ifelse(Gear.Sampled == "BONGO", 0.33,0)) %>% # BONGO at all stations
   mutate(BON_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CTD",0.83,0)) %>% 
   mutate(BON_CalVET_hrs = ifelse(Gear.Sampled == "BONGO,CALVET", 0.66,0)) %>% 
   mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CALVET,CTD",1.16,0)) %>% 
+  #mutate(Bongo_hrs = ifelse(Gear.Sampled2 == "BONGO", 0.33,0)) %>% # BONGO at all stations
+  #mutate(BON_CTD_hrs = ifelse(Gear.Sampled2 == "BONGO,CTD",0.83,0)) %>% 
+  #mutate(BON_CalVET_hrs = ifelse(Gear.Sampled2 == "BONGO,CALVET", 0.66,0)) %>% 
+  #mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled2 == "BONGO,CALVET,CTD",1.16,0)) %>%
 #<<<<<<< Updated upstream
   mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,BON_CTD_hrs,BON_CalVET_hrs,BON_Cal_CTD_hrs))))) %>% mutate(Ship_Speed = 11) %>% # Ship speed is Variable
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
@@ -111,6 +105,8 @@ ShipsLog <- shipslog %>% group_by(Stn_Order, Station, Grid.ID) %>%
   rename("Station"="Stn_Order","Grid Station"="Grid.ID","Est.Station Time"="Sta_Time")
 
 #6. Create a table to link Gear.Sampled for daily stations in ShipsLog to know Operations at each station
+# Check: Gear.Sampled or Gear.Sampled2???
+
 Sta_GearSamp <- SRTdata %>% select(Station,Grid.ID,Gear.Sampled) %>% 
 filter(Station %in% FinalSta$Station) %>% select(Grid.ID,Gear.Sampled) %>% 
   rename("Grid Station"="Grid.ID")
@@ -127,7 +123,6 @@ kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>%
 
 ```{r Station Track Map,out.width = "100%", fig.align = "center", echo=FALSE, message=FALSE, warning=FALSE}
 
-SRTdata$LON <- SRTdata$LON*-1
 # get bathymetry data
 
 b = getNOAA.bathy(lon1 = min(SRTdata$LON)+-1, lon2 = max(SRTdata$LON)+1, 
