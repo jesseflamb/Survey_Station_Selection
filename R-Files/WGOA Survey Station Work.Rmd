@@ -23,7 +23,7 @@ packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice"
               "rnaturalearthdata", "forcats","sf", "geosphere")
 ipak(packages) 
 
-# Create a base Layer map of the core sampled areas, as per JL and LR meeting on 2023-02-16
+
 # Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
@@ -42,9 +42,6 @@ WGOAdata$LON <- WGOAdata$LON*-1
 
 # Count Gear.Sampled
 table(WGOAdata$Gear.Sampled)
-
-
-
 
 
 # get bathymetry data
