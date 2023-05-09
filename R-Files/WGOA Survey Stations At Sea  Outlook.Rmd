@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 Outlook: The purpose of this markdown is to determine an estimate of sampling time in order to adjust our plan to do the most sampling possible
-with the DAS we have left.  Variables that can be adjusted: Gear.Sampled per station and time taken to sample gear (lines 77-85), Ship Speed (line 87).  Lastly, station order matters in terms of distance (line 55).  
+with the DAS we have left.  Variables that can be adjusted: Gear.Sampled per station and time taken to sample gear (lines 82-85), Ship Speed (line 92).  Lastly, station order matters in terms of distance (line 56).  
 
 *Note: Be sure to properly enter the vector values of both "CompleteScenL" and "StaTDL", as they are needed to determine proper station number. 
 ```{r Setup & Opening Table, message=FALSE, warning=FALSE, include=FALSE}
@@ -76,7 +76,7 @@ depart <- ymd_hm("2023-05-14 16:00") # pre-survey calculations, takes ~8 hours t
 # depart <- lubridate::now(tzone = "America/Adak") # Alaska time, for at sea calculations
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"
-# If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 112,113, & 145
+# If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 86-89 & 119-120
 
 SRTdata <- Sta %>% 
   mutate(Bongo_hrs = ifelse(Gear.Sampled == "BONGO", 0.33,0)) %>% # BONGO at all stations
