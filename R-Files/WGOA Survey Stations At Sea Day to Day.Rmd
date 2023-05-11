@@ -45,10 +45,10 @@ AllSta<-c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,27
 ###Stations by Day/Interruptions
 
 ## Completed Stations
-CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1:156)) #Fill in with completed StaTDL stations
 
 ## Stations Remaining
-StaTDL<-c(1:6)
+StaTDL<-c(157:167)
 ScenName <- "Day Plan" # Best 
 Scenario<-StaTDL # Always Change to Updated Scen
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= (CompleteScenL+1):(CompleteScenL+length(Scenario))) 

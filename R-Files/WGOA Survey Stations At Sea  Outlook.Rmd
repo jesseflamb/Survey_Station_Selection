@@ -47,13 +47,24 @@ WGOAdata <- read.csv(here("Data","DY23-07_A&B_priority.csv"))
 #All Stations
 AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,271) 
 
+# Log of Removed Stations before Survey
+# (5/11/23): B 38:44,68:76
+
 #Stations Left to Sample
 
 # Completed Stations
 CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,271) 
+StaTDL<-c(1:9,24:28,59:53,84:77, 92:85, 100:93, 107:101,113:108,119:114, 
+          125:120, 131:126, 136:132,141:137, 142:142,152:148, 156:153, 159:157,165:160,
+          166:179,180,213:208,216:220,228:225,234:238,271) 
+
+# Reverse Order Stations for Reference (DO NOT DELETE)
+# 
+#            c(1:9,24:28,59:53,84:77, 92:85, 100:93, 107:101,113:108,119:114, 
+#           125:120, 131:126, 136:132,141:137, 142:142,152:148, 156:153, 159:157,165:160,
+#           166:179,180,213:208,216:220,228:225,234:238,271)
 
 
 ScenName <- "Stations Remaining"
@@ -72,21 +83,22 @@ ODsta <- Sta %>% select(Grid.ID,LAT,LON,Gear.Sampled,Stn_Order) %>%
 write.csv(ODsta, here("Data","For Dyson","DY23-07 Survey Station Order.csv"), row.names = FALSE)
 
 # 2. Choose Departure Date
-depart <- ymd_hm("2023-05-14 16:00") # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
+DH_SIP <- ymd_hm("2023-05-12 19:00") 
+depart <- DH_SIP + ddays(3) + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
 # depart <- lubridate::now(tzone = "America/Adak") # Alaska time, for at sea calculations
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"
 # If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 86-89 & 119-120
 
 SRTdata <- Sta %>% 
-  mutate(Bongo_hrs = ifelse(Gear.Sampled == "BONGO", 0.33,0)) %>% # BONGO at all stations
-  mutate(BON_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CTD",0.83,0)) %>% 
-  mutate(BON_CalVET_hrs = ifelse(Gear.Sampled == "BONGO,CALVET", 0.66,0)) %>% 
-  mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CALVET,CTD",1.16,0)) %>% 
-  #mutate(Bongo_hrs = ifelse(Gear.Sampled2 == "BONGO", 0.33,0)) %>% # BONGO at all stations
-  #mutate(BON_CTD_hrs = ifelse(Gear.Sampled2 == "BONGO,CTD",0.83,0)) %>% 
-  #mutate(BON_CalVET_hrs = ifelse(Gear.Sampled2 == "BONGO,CALVET", 0.66,0)) %>% 
-  #mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled2 == "BONGO,CALVET,CTD",1.16,0)) %>%
+  #mutate(Bongo_hrs = ifelse(Gear.Sampled == "BONGO", 0.33,0)) %>% # BONGO at all stations
+  #mutate(BON_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CTD",0.83,0)) %>% 
+  #mutate(BON_CalVET_hrs = ifelse(Gear.Sampled == "BONGO,CALVET", 0.66,0)) %>% 
+  #mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CALVET,CTD",1.16,0)) %>% 
+  mutate(Bongo_hrs = ifelse(Gear.Sampled2 == "BONGO", 0.33,0)) %>% # BONGO at all stations
+  mutate(BON_CTD_hrs = ifelse(Gear.Sampled2 == "BONGO,CTD",0.83,0)) %>% 
+  mutate(BON_CalVET_hrs = ifelse(Gear.Sampled2 == "BONGO,CALVET", 0.66,0)) %>% 
+  mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled2 == "BONGO,CALVET,CTD",1.16,0)) %>%
 #<<<<<<< Updated upstream
   mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,BON_CTD_hrs,BON_CalVET_hrs,BON_Cal_CTD_hrs))))) %>% 
   mutate(Ship_Speed = 11) %>%  # Ship speed is Variable
