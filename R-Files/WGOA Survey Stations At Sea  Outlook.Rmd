@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 Outlook: The purpose of this markdown is to determine an estimate of sampling time in order to adjust our plan to do the most sampling possible
-with the DAS we have left.  Variables that can be adjusted: Gear.Sampled per station and time taken to sample gear (lines 82-85), Ship Speed (line 92).  Lastly, station order matters in terms of distance (line 56).  
+with the DAS we have left.  Variables that can be adjusted: Gear.Sampled per station and time taken to sample gear (lines 99-102), Ship Speed (line 105).  Lastly, station order matters in terms of distance (line 60).  
 
 *Note: Be sure to properly enter the vector values of both "CompleteScenL" and "StaTDL", as they are needed to determine proper station number. 
 ```{r Setup & Opening Table, message=FALSE, warning=FALSE, include=FALSE}
@@ -38,6 +38,7 @@ Below are a Station Table and Map of the rest of the Survey
 # Load Station Data Table from DY19-05
 #WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
 WGOAdata <- read.csv(here("Data","DY23-07_A&B_priority.csv"))
+#Grid.loc <- WGOAdata %>% select(Grid.ID,LAT,LON)
 
 # Filter our "B" priority stations
 #WGOAdata <- WGOAdata %>% filter(Sta_Pri=="A")
@@ -83,8 +84,8 @@ ODsta <- Sta %>% select(Grid.ID,LAT,LON,Gear.Sampled,Stn_Order) %>%
 write.csv(ODsta, here("Data","For Dyson","DY23-07 Survey Station Order.csv"), row.names = FALSE)
 
 # 2. Choose Departure Date
-DH_SIP <- ymd_hm("2023-05-12 19:00") 
-depart <- DH_SIP + ddays(3) + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
+DH_SIP <- ymd_hm("2023-05-15 12:00") 
+depart <- DH_SIP + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
 # depart <- lubridate::now(tzone = "America/Adak") # Alaska time, for at sea calculations
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"
@@ -128,11 +129,12 @@ ShipsLog <- shipslog %>% group_by(Stn_Order, Station, Grid.ID) %>%
   rename("Station"="Stn_Order","Grid Station"="Grid.ID","Est.Station Time"="Sta_Time")
 
 #6. Create a table to link Gear.Sampled for daily stations in ShipsLog to know Operations at each station
-Sta_GearSamp <- SRTdata %>% select(Station,Grid.ID,Gear.Sampled) %>% 
-filter(Station %in% FinalSta$Station) %>% select(Grid.ID,Gear.Sampled) %>% 
+Sta_GearSamp <- SRTdata %>% select(Station,Grid.ID,LAT,LON,Gear.Sampled) %>% 
+filter(Station %in% FinalSta$Station) %>% select(Grid.ID,LAT,LON,Gear.Sampled) %>% 
   rename("Grid Station"="Grid.ID")
 
-ShipsLog <- left_join(ShipsLog,Sta_GearSamp, by = "Grid Station")
+ShipsLog <- left_join(ShipsLog,Sta_GearSamp, by = "Grid Station") %>% 
+  select(Station,`Grid Station`,LAT,LON,Gear.Sampled,`Est.Station Time`)
 
 # Output Station Table, include: Ships Log
 kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>% 

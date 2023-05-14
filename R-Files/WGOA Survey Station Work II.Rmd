@@ -34,6 +34,8 @@ WGOAdata <- WGOAdata %>% rename("LAT" = "Latitude.N.") %>% rename("LON"="Longitu
   mutate(Gear.Sampled = replace(Gear.Sampled,Gear.Sampled == "CALVET, CTD","BONGO,CALVET,CTD"))
 WGOAdata$LON <- WGOAdata$LON*-1
 
+Grid.loc <- WGOAdata %>% select(Grid.ID,LAT,LON)
+
 # Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
@@ -46,7 +48,7 @@ Transforms "Station Run Time.xlsx" to calculate how long the survey could take b
 ### Create Station & Runtime Dataset, mirroring "Final Station Runtime" Spreadsheets
 
 AllSTA <- WGOAdata$Station 
-ScenName <- "All Possible Stations from DY19-05"
+ScenName <- "2023-05-15 Stations Possible"
 Scenario<-AllSTA
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"=1:length(Scenario))
 
@@ -91,7 +93,9 @@ depart <- ymd_hm("2023-05-14 12:00")
 ShipsLog <- shipslog %>% group_by(Stn_Order, Station, Grid.ID) %>% 
   reframe(Time_Dur = lubridate::dseconds(sum(Time_Dur)))  %>% 
   mutate(Sta_Time =  depart) %>% mutate(cTime_Dur = cumsum(Time_Dur)) %>%
-  mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Stn_Order, Grid.ID,Sta_Time)
+  mutate(Sta_Time = cTime_Dur + Sta_Time) %>% select(Station, Stn_Order, Grid.ID,Sta_Time) %>% 
+  left_join(.,Grid.loc) %>% select(Stn_Order,Grid.ID,LAT,LON,Sta_Time)
+
 
 ```
 
@@ -121,8 +125,15 @@ WGOA_StaTable <- SRTdata %>% select(Station, Grid.ID,LAT,LON,Gear.Sampled) %>%
   mutate(Gear.Sampled = ifelse(Station %in% Port,"",Gear.Sampled)) %>% 
   mutate(Sta_Pri = if_else(Station %in% A,"A",if_else(Station %in% B,"B","C"))) 
 
-# Remove C priority Stations
-WGOA_StaTable <- WGOA_StaTable %>% filter(Sta_Pri != "C")
+## Remove C priority Stations; filter dropped stations from Outlook 
+# Outlook Stations left, in order
+StaTDL<-c(1:9,24:28,59:53,84:77, 92:85, 100:93, 107:101,113:108,119:114, 
+          125:120, 131:126, 136:132,141:137, 142:142,152:148, 156:153, 159:157,165:160,
+          166:179,180,213:208,216:220,228:225,234:238,271)
+
+WGOA_StaTable <- WGOA_StaTable %>% filter(Sta_Pri != "C") %>% 
+  filter(Station %in% StaTDL)
+  
 ScenName <- "DY23-07 All A & B Priority Stations"
 
 write.csv(WGOA_StaTable, here("Data","DY23-07_A&B_priority.csv"))
@@ -165,5 +176,5 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
 
 StaMapF
 
-#ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
+ggsave(paste0(ScenName,".png"),path = here("Docs"), height = 8.5, width = 11, units = "in")
 ```
