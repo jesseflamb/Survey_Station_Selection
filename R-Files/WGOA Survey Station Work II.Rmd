@@ -147,9 +147,9 @@ write.csv(WGOA_StaTable, here("Data","DY23-07_A&B_priority.csv"))
 #WGOA_StaTable$LON <- WGOA_StaTable$LON*-1
 # get bathymetry data
 
-#CVgrid <- c(114:142)
-#WGOA_StaTable <- WGOA_StaTable %>% filter(Station %in% CVgrid)
-#ScenName <- "CalVetGrid Stations"
+Tempgrid <- c(24:28,59:53)
+WGOA_StaTable <- WGOA_StaTable %>% filter(Station %in% Tempgrid)
+ScenName <- "Temp Grid Stations"
 
 b = getNOAA.bathy(lon1 = min(WGOA_StaTable$LON)+-1, lon2 = max(WGOA_StaTable$LON)+1, 
                   lat1 = min(WGOA_StaTable$LAT)+-1, lat2 = max(WGOA_StaTable$LAT)+1, 
@@ -171,7 +171,7 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   #Plot points & station track
   geom_point(data = WGOA_StaTable, mapping = aes(LON, LAT, shape = Gear.Sampled, color= Sta_Pri), size = 2)+ 
   #geom_path(data = WGOA_StaTable, mapping = aes(LON, LAT), linewidth = 0.25) +  
-  geom_text(data = WGOA_StaTable, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
+  geom_text(data = WGOA_StaTable, mapping = aes(LON, LAT, label = Grid.ID ), nudge_y = -0.08, size = 2.5)+ 
   scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
   scale_color_manual(values = stpliteCol)+
     ggtitle(paste(ScenName)) +
