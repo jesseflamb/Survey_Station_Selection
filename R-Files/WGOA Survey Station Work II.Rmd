@@ -108,7 +108,8 @@ Create Station Table file from "SRTdata" above, with a column listing station sa
 
 # Below is an EXAMPLE to get code to run and plot proper (4/27/23)
 A <- c(0,24:28, 53:59, 77:84,93:100,108:113,120:125,132:141,148:152,160:165,
-       167,169,171,173,175,177,208:213,225:228,220,218,216,234:238,271) 
+       167,169,171,173,175,177,208:213,225:228,220,218,216,224:221,219,217,215
+       ,214,229:233,239,243:245,234:238,271) 
 B <- c(1:9, 38:44,68:76,85:92,101:107,114:119,126:131,142:147,153:159,166,168,170,
        172,174,176,178,179,180)
 Port <-c(0)
@@ -128,7 +129,8 @@ WGOA_StaTable <- WGOAdata %>% select(Station, Grid.ID,LAT,LON,Gear.Sampled) %>%
 # Outlook Stations left, in order
 StaTDL<-c(1:9,24:28,59:53,84:77, 92:85, 100:93, 107:101,113:108,119:114, 
           125:120,131:126,136:132,141:137,142:147,152:148, 156:153, 159:157,165:160,
-          166:179,180,213:208,216,218,220,228:225,234:238,271)
+          166:179,180,213:208,224:221,219,217,215,
+          214,216,218,220,228:225,234:238,271)
 
 WGOA_StaTable <- WGOA_StaTable %>% filter(Sta_Pri != "C") %>% 
   filter(Station %in% StaTDL)
@@ -147,9 +149,10 @@ write.csv(WGOA_StaTable, here("Data","DY23-07_A&B_priority.csv"))
 #WGOA_StaTable$LON <- WGOA_StaTable$LON*-1
 # get bathymetry data
 
-Tempgrid <- c(24:28,59:53)
+Tempgrid <- c(119:114,125:120,131:126,136:132,141:137,142:147,152:148, 156:153, 159:157,165:160,
+          166:179,180,213:208,216,218,220,228:225,234:238,271)
 WGOA_StaTable <- WGOA_StaTable %>% filter(Station %in% Tempgrid)
-ScenName <- "Temp Grid Stations"
+ScenName <- "Remaining Grid Stations"
 
 b = getNOAA.bathy(lon1 = min(WGOA_StaTable$LON)+-1, lon2 = max(WGOA_StaTable$LON)+1, 
                   lat1 = min(WGOA_StaTable$LAT)+-1, lat2 = max(WGOA_StaTable$LAT)+1, 
@@ -171,7 +174,7 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   #Plot points & station track
   geom_point(data = WGOA_StaTable, mapping = aes(LON, LAT, shape = Gear.Sampled, color= Sta_Pri), size = 2)+ 
   #geom_path(data = WGOA_StaTable, mapping = aes(LON, LAT), linewidth = 0.25) +  
-  geom_text(data = WGOA_StaTable, mapping = aes(LON, LAT, label = Grid.ID ), nudge_y = -0.08, size = 2.5)+ 
+  geom_text(data = WGOA_StaTable, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
   scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+
   scale_color_manual(values = stpliteCol)+
     ggtitle(paste(ScenName)) +

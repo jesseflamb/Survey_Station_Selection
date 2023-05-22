@@ -51,25 +51,25 @@ AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,2
 #Stations Left to Sample
 
 # Completed Stations
-CompleteScenL <- length(c(1:6,7:9)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
+                          90:85,100:97,96,95:93,107:105,110)) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(24:28,59:53,84:77,92:85,100:93,107:101,113:108,119:114, 
-          125:120,131:126,136:132,141:137,147:142,152:148, 156:153, 
-          159:157,165:160,166:179,180,213:208,216,218,220,228:225,234:238,271) 
+StaTDL<-c(119,121,130,133,140,144,151,154,158,171)
 
 ### Cutting B stations for time
 
 STA.0516 <- c(157:159,166,168,170,172,174,176,178:180)
-STA.0517 <- c(85:92,101:107)
+STA.0520 <- c(167:177) # All Shelikof Stations Cut
 
-B_Drop_Vec <- c(STA.0516,STA.0517)
+
+#B_Drop_Vec <- c(STA.0516,STA.0517)
 #Drop Stations by subset using updated above vector, keep drops by date
 
 #WGOAdata <- WGOAdata %>% subset(!(Station %in% STA.0516))
 
 # Save CSV of above for Day to Day
-write.csv(WGOAdata, here("Data","DY23-07_Day2Day.csv"))
+#write.csv(WGOAdata, here("Data","DY23-07_Day2Day.csv"))
 
 # Reverse Order Stations for Reference (DO NOT DELETE)
 # 
@@ -93,7 +93,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 #depart <- DH_SIP + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
 
 # Use below during survey
-depart <- lubridate::now(tzone = "America/Anchorage") + dhours(8) # Alaska time, for at sea calculations
+depart <- lubridate::now(tzone = "America/Anchorage") + dhours(16.5) # Alaska time, for at sea calculations
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"=
 

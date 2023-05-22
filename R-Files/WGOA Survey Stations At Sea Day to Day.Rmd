@@ -4,9 +4,8 @@ author: "Jesse F Lamb"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-Day to Day: The purpose of this markdown is to determine the next Days sampling. Variables that can be adjusted: Gear.Sampled per station and time taken to sample gear (lines 77-80), Ship Speed (line 83).  Lastly, station order matters in terms of distance (line 52).  
+Day to Day: The purpose of this markdown is to determine the next Days sampling. Variables that can be adjusted: Ship Speed (line 77).  Lastly, station order matters in terms of distance (line 51).  
 
-*Note: Be sure to properly enter the vector values of both "CompleteScenL" and "StaTDL", as they are needed to determine proper station number. 
 ```{r Setup & Opening Table, message=FALSE, warning=FALSE, include=FALSE}
 
 #Install Packages
@@ -17,10 +16,8 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
-              "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
-              "oce", "here","reshape2", "viridis", "export", "rnaturalearth", "kableExtra",
-              "rnaturalearthdata", "forcats","sf", "geosphere")
+packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table","tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4","oce", "here","reshape2", "viridis", "export", "rnaturalearth", "kableExtra",
+"rnaturalearthdata", "forcats","sf", "geosphere")
 ipak(packages)
 
 # Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
@@ -46,12 +43,13 @@ AllSta<-c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,27
 ###Stations by Day/Interruptions
 
 ## Completed Stations
-CompleteScenL <- length(c(1,6,5,2:4,7:9)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
+                          90:85,100:97,96,95:93,107:105,110,119,117,115)) #Fill in with completed StaTDL stations
 
 ## Stations Remaining
-StaTDL<-c(24:28,59:53)
+StaTDL<-c(124,122,128,127,136,135,137,147)
 ScenName <- "Day Plan" # Best 
-Scenario<-StaTDL # Always Change to Updated Scen
+Scenario<-StaTDL # Always Change to Updated Scene
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= (CompleteScenL+1):(CompleteScenL+length(Scenario))) 
 #Stn_Order = cumulative Station order for data entry
 
@@ -63,7 +61,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 # 2. Choose Departure Date
 #DH_SIP <- ymd_hm("2023-05-15 12:00") 
 #depart <- DH_SIP + dhours(10) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
-depart <- lubridate::now(tzone = "America/Anchorage") + dhours(5.5)
+depart <- lubridate::now(tzone = "America/Anchorage") + dhours(1.25)
 
 # 3. Create data.frame that mirrors "Final Station Runtime"
 # If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 86-89 & 119-120
