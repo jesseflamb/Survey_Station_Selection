@@ -137,7 +137,7 @@ WGOA_StaTable <- WGOA_StaTable %>% filter(Sta_Pri != "C") %>%
   
 ScenName <- "DY23-07 All A & B Priority Stations"
 
-write.csv(WGOA_StaTable, here("Data","DY23-07_A&B_priority.csv"))
+#write.csv(WGOA_StaTable, here("Data","DY23-07_A&B_priority.csv"))
 
 ```
 
@@ -149,10 +149,11 @@ write.csv(WGOA_StaTable, here("Data","DY23-07_A&B_priority.csv"))
 #WGOA_StaTable$LON <- WGOA_StaTable$LON*-1
 # get bathymetry data
 
-Tempgrid <- c(119:114,125:120,131:126,136:132,141:137,142:147,152:148, 156:153, 159:157,165:160,
-          166:179,180,213:208,216,218,220,228:225,234:238,271)
+Tempgrid <- c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
+              90:85,100:97,96,95:93,107:105,110,119,
+              117,115,124,122,128,127,136,135)
 WGOA_StaTable <- WGOA_StaTable %>% filter(Station %in% Tempgrid)
-ScenName <- "Remaining Grid Stations"
+ScenName <- "Completed Grid Stations"
 
 b = getNOAA.bathy(lon1 = min(WGOA_StaTable$LON)+-1, lon2 = max(WGOA_StaTable$LON)+1, 
                   lat1 = min(WGOA_StaTable$LAT)+-1, lat2 = max(WGOA_StaTable$LAT)+1, 
@@ -172,7 +173,7 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.3), colour="black")+ # add 200m contour
   geom_sf(data = world)+coord_sf(xlim = lons, ylim = lats, expand = FALSE)+ # add coastline
   #Plot points & station track
-  geom_point(data = WGOA_StaTable, mapping = aes(LON, LAT, shape = Gear.Sampled, color= Sta_Pri), size = 2)+ 
+  geom_point(data = WGOA_StaTable, mapping = aes(LON, LAT, shape = Gear.Sampled, color= "black"), size = 2)+ 
   #geom_path(data = WGOA_StaTable, mapping = aes(LON, LAT), linewidth = 0.25) +  
   geom_text(data = WGOA_StaTable, mapping = aes(LON, LAT, label = Station ), nudge_y = -0.08, size = 2.5)+ 
   scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+

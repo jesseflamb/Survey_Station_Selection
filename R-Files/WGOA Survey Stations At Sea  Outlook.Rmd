@@ -51,11 +51,11 @@ AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,2
 #Stations Left to Sample
 
 # Completed Stations
-CompleteScenL <- length(c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
-                          90:85,100:97,96,95:93,107:105,110)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(119,121,130,133,140,144,151,154,158,171)
+StaTDL<-c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
+  90:85,100:97,96,95:93,107:105,110,119,117,115,122,124,128,127)
 
 ### Cutting B stations for time
 
@@ -78,7 +78,7 @@ STA.0520 <- c(167:177) # All Shelikof Stations Cut
 #           166:179,180,213:208,216:220,228:225,234:238,271)
 
 
-ScenName <- "Stations Remaining"
+ScenName <- "Stations Completed"
 Scenario<-StaTDL # Always Change to Updated Stations Remaining
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= (CompleteScenL+1):(CompleteScenL+length(Scenario)))
 
