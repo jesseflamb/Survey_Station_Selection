@@ -140,7 +140,9 @@ filter(Station %in% FinalSta$Station) %>% select(Grid.ID,LAT,LON,Gear.Sampled) %
 
 ShipsLog <- left_join(ShipsLog,Sta_GearSamp, by = "Grid Station") %>% 
   select(Station,`Grid Station`,Gear.Sampled)
-  #select(Station,`Grid Station`,LAT,LON,Gear.Sampled,`Est.Station Time`)
+#select(Station,`Grid Station`,LAT,LON,Gear.Sampled,`Est.Station Time`)
+
+#write.csv(ShipsLog,here("Docs","DY23-07_Spr_Larval_Completed_Sta.csv"))
 
 # Output Station Table, include: Ships Log
 kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>% 
