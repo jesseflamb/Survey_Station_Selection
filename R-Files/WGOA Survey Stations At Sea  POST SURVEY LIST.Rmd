@@ -113,8 +113,8 @@ SRTdata <- Sta %>%
   mutate(Steam_T = lubridate::dhours(Steam_T))
 
 # Write .csv of new Station Order for Oscar Dyson crew 
-ODsta <- SRTdata %>% select(Grid.ID,LAT,LON,Gear.Sampled,Stn_Order) 
-#write.csv(ODsta, here("Data","For Dyson","DY23-07 Survey Station Order.csv"), row.names = FALSE) #Error if file open
+ODsta <- SRTdata %>% select(Grid.ID,LAT,LON,Gear.Sampled,Stn_Order,Dist_NM) 
+write.csv(ODsta, here("Data","For Dyson","DY23-07 Survey Station Order.csv"), row.names = FALSE) #Error if file open
 
 
 # 4. rearrange data to calculate time to travel to and complete station operations

@@ -36,6 +36,9 @@ shp.mp.LL<-st_transform(shp.mp,crs=("+proj=longlat"))
 
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
 
+GridStaData <- read.csv(here("Data","2023-10-18 WGOA Grid Sta Depth Data.csv"))
+GridMeanZ <- GridStaData %>% group_by(FOCI_GRID) %>% summarise(MeanZ = mean(BOTTOM_DEPTH))
+
 # If using "WGOA station_list_dougherty_2019_ProjInstrutions.csv" as WGOAdata, run the following 
 WGOAdata <- WGOAdata %>% rename("LAT" = "Latitude.N.") %>% rename("LON"="Longitude..W.")
 WGOAdata$LON <- WGOAdata$LON*-1
@@ -121,7 +124,7 @@ FinalSta<-data.frame("Station"=Scenario,"Stn_Order"=1:length(Scenario))
 # FinalSta <- setdiff(AllSta,LLCvec) # All stations left
 Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
   filter(Station %in% FinalSta$Station) %>%  
-  arrange(Stn_Order)
+  arrange(Stn_Order) %>% toupper(Grid.ID)
 
 
 # 1. Create data.frame that mirrors "Final Station Runtime"
