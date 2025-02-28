@@ -35,20 +35,22 @@ ui <- fluidPage(
 )
 
 # Bering Sea
-#EBSdata <- read.csv(here("Data","UpdatedEBSdata_DY2407_StationList.csv"))
-#str(EBSdata)
+EBSdata <- read.csv(here("Data","UpdatedEBSdata_DY2407_StationList.csv"))
+str(EBSdata)
 
 # WGOA 
 #Station Location Data
-WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
-  rename("LAT" = "Latitude.N.") %>% rename("LON"="Longitude..W.") %>% mutate(Grid.ID = tolower(Grid.ID))
-WGOAdata$LON <- WGOAdata$LON*-1
-GridStaData <- read.csv(here("Data","2023-10-18 WGOA Grid Sta Depth Data.csv"))
-GridMeanZ <- GridStaData %>% dplyr::rename("Grid.ID" = "FOCI_GRID") %>% 
-  mutate(Grid.ID = tolower(Grid.ID)) %>% 
-  group_by(Grid.ID) %>% summarise(MeanZ = mean(BOTTOM_DEPTH))
+#WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) %>% 
+#  rename("LAT" = "Latitude.N.") %>% rename("LON"="Longitude..W.") %>% mutate(Grid.ID = tolower(Grid.ID))
+#WGOAdata$LON <- WGOAdata$LON*-1
+#GridStaData <- read.csv(here("Data","2023-10-18 WGOA Grid Sta Depth Data.csv"))
+#GridMeanZ <- GridStaData %>% dplyr::rename("Grid.ID" = "FOCI_GRID") %>% 
+#  mutate(Grid.ID = tolower(Grid.ID)) %>% 
+#  group_by(Grid.ID) %>% summarise(MeanZ = mean(BOTTOM_DEPTH))
 
-WGOAdata_z <- dplyr::left_join(WGOAdata,GridMeanZ, by = "Grid.ID")
+#WGOAdata_z <- dplyr::left_join(WGOAdata,GridMeanZ, by = "Grid.ID")
+
+#w1 <- ggplot2::map_data("world", xlim = c(-180,180), ylim = c(20, 80))
 
 
 # get bathymetry data

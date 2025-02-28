@@ -17,7 +17,6 @@ ipak(packages)
 world <- ne_countries(scale = "medium", returnclass = "sf")
 class(world)
 
-
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
 
 WGOAdata$Longitude..W. <- WGOAdata$Longitude..W.*-1
@@ -68,8 +67,6 @@ GOARegion_Map_New <- ggplot()+
 GOARegion_Map_New
 
 ggsave("DY23-07 Map for Survey Brief.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
-
-
 
 #### Large Station Maps for Survey  ####
 
