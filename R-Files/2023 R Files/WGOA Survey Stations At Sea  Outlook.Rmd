@@ -37,16 +37,15 @@ Below are a Station Table and Map of the rest of the Survey
 ```{r Opening Table, echo=FALSE, warning=FALSE, message=FALSE}
 # Load Station Data Table from DY19-05
 #WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
-WGOAdata <- read.csv(here("Data","DY23-07_A&B_priority.csv"))
+WGOAdata <- read.csv(here("Data","2025","2025-03-07 DY25-06 PI Waypoints & Gear.csv"))
+WGOAdata$Station <- seq(0, nrow(WGOAdata) - 1)
+WGOAdata <- WGOAdata[,-1]
 
 ### Create Station & Runtime Dataset ############
 
 ###All Stations: based on "Station Column" of "WGOA station_list_dougherty_2019_ProjInstrutions.csv", currently
 # in "Data"
-AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,271) 
-
-# Log of Removed Stations before Survey
-# (5/11/23): B 38:44,68:76
+AllSta<- c(0:238) 
 
 #Stations Left to Sample
 
@@ -54,13 +53,11 @@ AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,2
 CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
-  90:85,100:97,96,95:93,107:105,110,119,117,115,122,124,128,127)
+StaTDL<-c(0:238)
 
-### Cutting B stations for time
-
-STA.0516 <- c(157:159,166,168,170,172,174,176,178:180)
-STA.0520 <- c(167:177) # All Shelikof Stations Cut
+### Cutting stations for time
+#STA.0516 <- c(157:159,166,168,170,172,174,176,178:180)
+#STA.0520 <- c(167:177) # All Shelikof Stations Cut
 
 
 #B_Drop_Vec <- c(STA.0516,STA.0517)
@@ -115,7 +112,7 @@ SRTdata <- Sta %>%
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
 
-# Write .csv of new Station Order for Oscar Dyson crew 
+#Write .csv of new Station Order for Oscar Dyson crew 
 ODsta <- SRTdata %>% select(Grid.ID,LAT,LON,Gear.Sampled,Stn_Order) 
 #write.csv(ODsta, here("Data","For Dyson","DY23-07 Survey Station Order.csv"), row.names = FALSE) #Error if file open
 

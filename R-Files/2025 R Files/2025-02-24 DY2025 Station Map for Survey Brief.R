@@ -30,16 +30,33 @@ reg = subset(reg, region %in% c('USSR', 'USA'))
 # convert lat longs
 reg$long = (360 - reg$long)*-1
 # set map limits, whole region
+#Normal Map
 lons = c(-167, -149) #-140 = large map
 lats = c(53, 60.25) # 52 = large map
+
+#Focused Map
+#lons = c(-153, -149) 
+#lats = c(58, 60.25) 
+
 
 ### Station Data
 WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
 WGOAdata$Longitude..W. <- WGOAdata$Longitude..W.*-1
-# Remove stations near Unimak and SW of Shumagins for 2025 Start
-WGOAdata_25 <- WGOAdata[-c(1:25),] 
-WGOAdata_25$Station <- seq_len(nrow(WGOAdata_25))
-WGOAdata_25$Longitude..W. <- WGOAdata_25$Longitude..W.*-1
+# Remove stations SW of Shumagins for 2025 Start
+WGOAdata_03 <- WGOAdata[-c(8:25,183:197),] 
+#WGOAdata_03$Station <- seq_len(nrow(WGOAdata_03))
+WGOAdata_03$Longitude..W. <- WGOAdata_03$Longitude..W.*-1
+
+# Create Waypoint Data for Dyson and Survey Station Selection base coordinates
+WGOA_wp <- WGOAdata_03 %>% rename (LAT = Latitude.N., LON = Longitude..W.) %>% 
+  mutate(Gear.Sampled = "") %>% 
+  mutate(Gear.Sampled = ifelse(Grid.ID %in% c("DH","Kodiak"), "Port", Gear.Sampled)) %>% 
+  mutate(Gear.Sampled = ifelse(grepl("FOX", Grid.ID), "LINE8", Gear.Sampled)) %>% 
+  mutate(Gear.Sampled = ifelse(Grid.ID %in% c("gv161","gx161","gz161",
+                                              "hb161","hd161","hf161"), "BONGO,CTD", Gear.Sampled )) %>% 
+  mutate(Gear.Sampled= ifelse(Gear.Sampled == "", "BONGO", Gear.Sampled))
+  
+write.csv(WGOA_wp, file = here("Data","For Dyson","2025-03-07 DY25-06 Project Instructions Waypoints.csv"))
 
 ######################################
 # make plot
@@ -50,27 +67,26 @@ GOARegion_Map_New <- ggplot()+
   geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-100),linewidth=c(0.5),colour="darkgrey")+
   # add 200m contour
   geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.2),colour="black")+
-  
   geom_sf(data = world) + coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
   #Plot WGOA points
-  geom_point(data = WGOAdata_25, mapping = aes(Longitude..W., Latitude.N.), #, shape = Gear.Sampled
-             size = 1, show.legend = FALSE)+ 
-  #Delete "shape..." for just stations
-  #geom_text(data = WGOAdata, mapping = aes(Longitude..W., Latitude.N., label = Station ), 
-  #          nudge_y = -0.08, size = 2.5)+ 
+  geom_point(data = WGOAdata_03, mapping = aes(Longitude..W., Latitude.N.), #, shape = Gear.Sampled
+             size = 1, show.legend = FALSE) + 
+ # geom_text(data = WGOAdata_02, 
+#           aes(x = Longitude..W., y = Latitude.N.,label = Grid.ID, vjust = -0.08, size = 1)) +
   scale_shape_discrete()+ 
+  labs(title = "DY25-06: EcoFOCI Spring Ichthyoplankton Survey") +
   theme_bw()+ xlab("Longitude")+ ylab("Latitude")+
-  theme(axis.title = element_text(size = 20))+  
-  theme(axis.text.x=element_text(size=15, color = "black"), axis.text.y = element_text(size=15, color = "black"))+
-  theme(legend.position = "none")+
+  theme(axis.title = element_text(size = 20) , 
+        axis.text.x=element_text(size=15, color = "black"), 
+        axis.text.y = element_text(size=15, color = "black"),
+        legend.position = "none") +
   annotate("text", x=-163,y=57.4912, label = "Bering Sea", size = 12)+
   annotate("text", x=-153.495,y=57.4912,size = 8, label = "Kodiak Is.")+
   annotate("text", x=-157.5,y=59.7, label = "Alaska", 
             size = 15, fontface = "bold")
-
 GOARegion_Map_New
 
-ggsave("DY25-XX Map for Survey Brief.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
+ggsave("2025-03-07 DY25-06 Map for Survey Brief.png",path = here("Docs"), height = 8.5, width = 11, units = "in")
 
 #### Project Instructions: Large Station Maps for Survey ####
 
