@@ -37,9 +37,9 @@ Below are a Station Table and Map of the rest of the Survey
 ```{r Opening Table, echo=FALSE, warning=FALSE, message=FALSE}
 # Load Station Data Table from DY19-05
 #WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
-WGOAdata <- read.csv(here("Data","2025","2025-03-07 DY25-06 PI Waypoints & Gear.csv"))
-WGOAdata$Station <- seq(0, nrow(WGOAdata) - 1)
-WGOAdata <- WGOAdata[,-1]
+WGOAdata <- read.csv(here("Data","2025","2025-04-01 WGOA DY25-05 GearTime & WPZ.csv"))
+#WGOAdata$Station <- seq(0, nrow(WGOAdata) - 1)
+#WGOAdata <- WGOAdata[,-1]
 
 ### Create Station & Runtime Dataset ############
 
@@ -56,11 +56,9 @@ CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 StaTDL<-c(0:238)
 
 ### Cutting stations for time
-#STA.0516 <- c(157:159,166,168,170,172,174,176,178:180)
-#STA.0520 <- c(167:177) # All Shelikof Stations Cut
+# NE_Kodiak <- c(161:180)
 
-
-#B_Drop_Vec <- c(STA.0516,STA.0517)
+#B_Drop_Vec <- c(NE_Kodiak)
 #Drop Stations by subset using updated above vector, keep drops by date
 
 #WGOAdata <- WGOAdata %>% subset(!(Station %in% STA.0516))

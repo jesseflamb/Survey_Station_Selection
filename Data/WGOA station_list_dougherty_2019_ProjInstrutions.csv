@@ -1,4 +1,4 @@
-﻿Station,Grid ID,Latitude(N), Longitude (W),Gear Sampled
+Station,Grid ID,Latitude(N), Longitude (W),Gear Sampled
 0,DH,53.8746,166.5423,
 1,gf105,54.2879,164.2684,
 2,gh105,54.1731,164.0241,
@@ -270,4 +270,4 @@
 268,hn173,56.4491,153.5155,NEU
 269,hl173,56.5639,153.7281,NEU
 270,hj173,56.6787,153.9414,
-271,Kodiak,57.78385,152.4267,
+,,,,
