@@ -6,7 +6,7 @@ output: html_document
 output_dir: C:/Users/jesse.f.lamb/Work/GitHub/Survey_Station_Selection/R-files/2025 R Files/2025 Rendered Files 
 ---
 Outlook: The purpose of this markdown is to determine an estimate of sampling time in order to adjust our plan to do the most sampling possible
-with the DAS we have left.  Variables that can be adjusted:  Depart Time (line 95), Ship Speed (line 106).  Lastly, station order matters in terms of distance (line 60), so adjust if neccessary.  
+with the DAS we have left.  Variables that can be adjusted:  Depart Time (line 95), Ship Speed = 10 (line 97).  Lastly, station order matters in terms of distance (line 60), so adjust if neccessary.  
 
 *Note: Be sure to properly enter the vector values of both "CompleteScenL" and "StaTDL", as they are needed to determine proper station number!
 ```{r Setup & Opening Table, message=FALSE, warning=FALSE, include=FALSE}

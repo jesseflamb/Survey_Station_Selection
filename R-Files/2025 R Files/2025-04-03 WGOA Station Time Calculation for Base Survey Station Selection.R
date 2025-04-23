@@ -17,8 +17,6 @@ ipak(packages)
 
 
 #### Wrangle Mean Depth from Zooplankton Data
-
-
 # GOA-IERP Master List, w/ Line 8 Added (not on orginial list)
 GridZData <- read.csv(here("Data","2025-04-01 All WGOA Gridsta Z Data.csv")) %>% rename("Grid.ID" = "FOCI_GRID") 
 WGOA_GridList <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv")) 
@@ -64,7 +62,7 @@ WGOA_wpz <- WGOA_wpz %>%
                              Mean_Z > 300 ~ NA_real_ # Protocol restriction: Do not calculate beyond 300m
                            ) + ((Mean_Z / 40) + 4) / 60, 0)) %>%
   
-  # Create LINE8_Time
+  # Create LINE8_Time, the "0.4167" at end is adding 25 minutes to each station for deck work
   mutate(LINE8_Time = ifelse(Gear.Sampled == "LINE8",
                              (
                                ((sqrt(Mean_Z^2 + Mean_Z^2) / 42.5 + (sqrt(Mean_Z^2 + Mean_Z^2)) / 20) + 6) / 60
@@ -78,6 +76,7 @@ WGOA_wpz <- WGOA_wpz %>%
                                ) + .4167, 0)) %>%
   
   # Sum across columns
-  mutate(Total_Gear_Time = rowSums(across(c(BONGO_Time, CTD_Time, LINE8_Time))))
+  mutate(Total_Gear_Time = rowSums(across(c(BONGO_Time, CTD_Time, LINE8_Time)))) %>% 
+  mutate(Total_Gear_Minutes = Total_Gear_Time*60)
 
 #write.csv(WGOA_wpz,file = here("Data","2025 Station Data","2025-04-01 WGOA DY25-05 GearTime & WPZ.csv"))
