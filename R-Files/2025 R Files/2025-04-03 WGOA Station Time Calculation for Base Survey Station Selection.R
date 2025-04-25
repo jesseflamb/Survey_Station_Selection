@@ -23,10 +23,10 @@ WGOA_GridList <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInst
 WGOA_GridList$Grid.ID <- toupper(WGOA_GridList$Grid.ID)
 WGOA_GridVec <- WGOA_GridList$Grid.ID
 
-# Filter GridZData by Known Recent WGOA Grid Stations, find mean depth per Grid Station
+# Filter GridZData by Known Recent WGOA Grid Stations, find mean depth per Grid Station (10 m off bottom)
 WGOA_GridZ <- GridZData %>% filter(Grid.ID %in% WGOA_GridVec) %>% 
   na.omit() %>% dplyr::select(Grid.ID,BOTTOM_DEPTH) %>% group_by(Grid.ID) %>% 
-  summarise(Mean_Z = mean(BOTTOM_DEPTH))
+  summarise(Mean_Z = (mean(BOTTOM_DEPTH)) - 10)
 #write.csv(WGOA_GridZ, file = here("Data","WGOA_GridSta_Bottom_Z.csv"))
 
 # Add Grid Station Mean Depth to Original WGOA Grid Station location file
@@ -42,38 +42,49 @@ WGOA_wpz <- WGOA_wpz %>% mutate(Mean_Z = ifelse(Grid.ID == "HJ173",60,Mean_Z))
 
 ### Calculate Estimated Tow time per operation based on Depth
 ## Bongo 
-# Use Pythagorean theorem to calculate tow time (c = sqrt(a^2 + b^2))
-# Assume ship moving 2 knots = 61.73m per minute
-# Assume 42.5m down, 20m up, Use Mean Z for calculation
-# 200m max, for 200m:
-bon_max_T = (((sqrt(200^2 + 200^2))/42.5 + (sqrt(200^2 + 200^2))/20)+6)/60
+# Calculate vertical decent rate based on 45 degree towing angle (calculate angle radians)
+# Then calculate vertical speed, based on wire speeds at 45 degree angle
 
-WGOA_wpz <- WGOA_wpz %>%
+# Calculate Angle Radians
+angle_degrees = 42.5
+AngRad <- angle_degrees*(pi / 180)
+
+# Define Vertical Descent & Assent Rates 
+BON_Dn_WS <- 42.5
+BON_Up_WS <- 20
+CTD_lt200_WS <- 30
+CTD_gt200_WS <- 45
+
+# Calc Vertical Speed by angle and Wire speed
+BON_Dn_VS <- BON_Dn_WS * sin(AngRad)
+BON_Up_VS <- BON_Up_WS * sin(AngRad)
+
+bon_max_T = ((200/BON_Dn_VS) + (200/BON_Up_VS))/60
+
+WGOA_wpz <- WGOA_wpz %>% 
   # Create BONGO_Time
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z <= 200),
-                             (((sqrt(Mean_Z^2 + Mean_Z^2)) / 42.5 + (sqrt(Mean_Z^2 + Mean_Z^2)) / 20) + 6) / 60, 0)) %>%
-  mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 200), bon_max_T, BONGO_Time)) %>%
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 6)/60, 
+                             0)) %>% 
+  mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 200), 
+                             bon_max_T, BONGO_Time)) %>%
   
   # Create CTD_Time
   mutate(CTD_Time = ifelse(Gear.Sampled == "BONGO,CTD", 
                            case_when(
-                             Mean_Z <= 200 ~ (Mean_Z / 30) / 60,
-                             Mean_Z <= 300 ~ ((200 / 30) + ((Mean_Z - 200) / 45)) / 60,
+                             Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
+                             Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60,
                              Mean_Z > 300 ~ NA_real_ # Protocol restriction: Do not calculate beyond 300m
-                           ) + ((Mean_Z / 40) + 4) / 60, 0)) %>%
+                           ) + ( 10 / 60), 0)) %>%
   
   # Create LINE8_Time, the "0.4167" at end is adding 25 minutes to each station for deck work
   mutate(LINE8_Time = ifelse(Gear.Sampled == "LINE8",
-                             (
-                               ((sqrt(Mean_Z^2 + Mean_Z^2) / 42.5 + (sqrt(Mean_Z^2 + Mean_Z^2)) / 20) + 6) / 60
-                             ) + 
-                               (
-                                 case_when(
-                                   Mean_Z <= 200 ~ (Mean_Z / 30) / 60,
-                                   Mean_Z <= 300 ~ ((200 / 30) + ((Mean_Z - 200) / 45)) / 60
-                                 ) +
-                                   ((Mean_Z / 40) + 4) / 60
-                               ) + .4167, 0)) %>%
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS) + 6) / 60) + 
+                               case_when(
+                                 Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
+                                 Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60 + (10 / 60) + 0.4167
+                               ), 
+                             0)) %>%
   
   # Sum across columns
   mutate(Total_Gear_Time = rowSums(across(c(BONGO_Time, CTD_Time, LINE8_Time)))) %>% 
