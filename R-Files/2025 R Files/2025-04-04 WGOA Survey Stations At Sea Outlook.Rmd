@@ -51,10 +51,10 @@ AllSta<- c(0:238)
 #Stations Left to Sample
 
 # Completed Stations
-CompleteScenL <- length(c(1:26)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(0)) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(27:238)
+StaTDL<-c(1:238)
 
 ### Cutting stations for time
 # NE_Kodiak <- c(162:180)
