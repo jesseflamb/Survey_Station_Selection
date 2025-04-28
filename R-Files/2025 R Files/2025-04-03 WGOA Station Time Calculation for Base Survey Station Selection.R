@@ -59,12 +59,12 @@ CTD_gt200_WS <- 45
 BON_Dn_VS <- BON_Dn_WS * sin(AngRad)
 BON_Up_VS <- BON_Up_WS * sin(AngRad)
 
-bon_max_T = ((200/BON_Dn_VS) + (200/BON_Up_VS)+ 15) / 60
+bon_max_T = ((200/BON_Dn_VS) + (200/BON_Up_VS)+ 28) / 60
 
 WGOA_wpz <- WGOA_wpz %>% 
   # Create BONGO_Time
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z <= 200),
-                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 15)/60, 
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 28)/60, 
                              0)) %>% 
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 200), 
                              bon_max_T, BONGO_Time)) %>%
@@ -75,14 +75,14 @@ WGOA_wpz <- WGOA_wpz %>%
                              Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
                              Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60,
                              Mean_Z > 300 ~ NA_real_ # Protocol restriction: Do not calculate beyond 300m
-                           ) + ( 15 / 60), 0)) %>%
+                           ) + ( 28 / 60), 0)) %>%
   
   # Create LINE8_Time, the "0.4167" at end is adding 25 minutes to each station for deck work
   mutate(LINE8_Time = ifelse(Gear.Sampled == "LINE8",
-                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS) + 6) / 60) + 
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS) + 28) / 60) + 
                                case_when(
                                  Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
-                                 Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60 + (15 / 60) + 0.4167
+                                 Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60 + (28 / 60) + 0.4167
                                ), 
                              0)) %>%
   
