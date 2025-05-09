@@ -99,10 +99,46 @@ WGOALarge
 ggsave("2025-04-03 DY25-05 Station Map for Spr Larval Project Instructions.png", 
        path = here("Docs", "2025 Docs"), height = 8.5, width = 11, units = "in")
 
+
+
+###### Smaller Section Maps
+lons = c(-155.5, -149.5) #-140 = large map
+lats = c(56, 59.5) # 52 = large map
+
+WGOASmall <- ggplot()+
+  # add 50m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),linewidth=c(0.5),colour="light grey")+
+  # add 100m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-100),linewidth=c(0.5),colour="darkgrey")+
+  # add 200m contour
+  geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-200),linewidth=c(0.2),colour="black")+
+  geom_sf(data = world) + coord_sf(xlim = lons, ylim = lats, expand = FALSE)+
+  #Plot WGOA points
+  geom_point(data = WGOA_wp, mapping = aes(LON, LAT), #, shape = Gear.Sampled
+             size = 1, show.legend = FALSE)+ 
+  #Delete "shape..." for just stations
+  geom_text(data = WGOA_wp, mapping = aes(LON, LAT, label = Station ), 
+            nudge_y = -0.03, size = 4)+ 
+  scale_shape_discrete()+
+  labs(title = "DY25-05 Late Survey", xlab = NULL, ylab = NULL)+
+  theme_bw() + 
+  theme(plot.title = element_text(size=13, color = "black"),
+        axis.title = element_blank(),  
+        axis.text.x=element_text(size=15, color = "black"), 
+        axis.text.y = element_text(size=15, color = "black"),
+        legend.position = "none") +
+  annotate("text", x=-163,y=57.4912, label = "Bering Sea", size = 8)+
+  annotate("text", x=-153.495,y=57.4912,size = 8, label = "Kodiak Is.")+
+  annotate("text", x=-157.5,y=59.7, label = "Alaska", 
+           size = 15, fontface = "bold")
+
+WGOASmall
+ggsave("2025-04-29 DY25-05 Station Map Late Survey.png", 
+       path = here("Figures"), height = 8.5, width = 11, units = "in")
+
+
+
 #### CTD Stations  ####
-
-
-
 #### Large Overall Map ####
 
 WGOA_CTD <- WGOA_wp %>% filter(Gear.Sampled == "BONGO,CTD" | Gear.Sampled == "LINE8")

@@ -3,6 +3,9 @@ wire_speed <- 42.5  # meters per minute
 angle_degrees <- 45
 depth <- 100  # meters
 
+# Since the wire is moving at 40 meters per minute at a 45-degree angle, 
+# the vertical speed is determined using trigonometry:
+
 # Convert angle to radians
 angle_radians <- angle_degrees * (pi / 180)
 
