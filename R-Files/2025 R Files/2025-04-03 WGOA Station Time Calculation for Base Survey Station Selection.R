@@ -50,7 +50,7 @@ angle_degrees = 42.5
 AngRad <- angle_degrees*(pi / 180)
 
 # Define Vertical Descent & Assent Rates 
-BON_Dn_WS <- 42.5
+BON_Dn_WS <- 40
 BON_Up_WS <- 20
 CTD_lt200_WS <- 30
 CTD_gt200_WS <- 45
@@ -59,14 +59,14 @@ CTD_gt200_WS <- 45
 BON_Dn_VS <- BON_Dn_WS * sin(AngRad)
 BON_Up_VS <- BON_Up_WS * sin(AngRad)
 
-bon_max_T = ((200/BON_Dn_VS) + (200/BON_Up_VS)+ 28) / 60
+bon_max_T = ((300/BON_Dn_VS) + (300/BON_Up_VS)+ 10) / 60
 
 WGOA_wpz <- WGOA_wpz %>% 
   # Create BONGO_Time
-  mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z <= 200),
-                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 28)/60, 
+  mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z <= 300),
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 10)/60, 
                              0)) %>% 
-  mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 200), 
+  mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 300), 
                              bon_max_T, BONGO_Time)) %>%
   
   # Create CTD_Time
@@ -75,14 +75,14 @@ WGOA_wpz <- WGOA_wpz %>%
                              Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
                              Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60,
                              Mean_Z > 300 ~ NA_real_ # Protocol restriction: Do not calculate beyond 300m
-                           ) + ( 28 / 60), 0)) %>%
+                           ) + ( 10 / 60), 0)) %>%
   
   # Create LINE8_Time, the "0.4167" at end is adding 25 minutes to each station for deck work
   mutate(LINE8_Time = ifelse(Gear.Sampled == "LINE8",
-                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS) + 28) / 60) + 
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS) + 10) / 60) + 
                                case_when(
                                  Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
-                                 Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60 + (28 / 60) + 0.4167
+                                 Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60 + (10 / 60) + 0.4167
                                ), 
                              0)) %>%
   
@@ -91,3 +91,7 @@ WGOA_wpz <- WGOA_wpz %>%
   mutate(Total_Gear_Minutes = Total_Gear_Time*60)
 
 write.csv(WGOA_wpz,file = here("Data","2025 Station Data","2025-04-01 WGOA DY25-05 GearTime & WPZ.csv"))
+
+# Create Reference List of Sta number, GridID, LAT, LON for print
+WGOA_StaRef <- WGOA_wpz %>% select(Station, Grid.ID,LAT,LON,Gear.Sampled,Mean_Z)
+write.csv(WGOA_StaRef,file = here("Data","2025 Station Data","2025-05-13 WGOA DY25-05 Station Reference for Print.csv"))

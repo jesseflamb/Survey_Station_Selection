@@ -46,15 +46,15 @@ WGOAdata <- read.csv(here("Data","2025 Station Data","2025-04-01 WGOA DY25-05 Ge
 
 ###All Stations: based on "Station Column" of current WGOA Data
 # in "Data"
-AllSta<- c(0:238) 
+AllSta<- c(0, 1:238) 
 
 #Stations Left to Sample
 
 # Completed Stations
-CompleteScenL <- length(c(0)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1:101)) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(1:238)
+StaTDL<-c(102:238)
 
 ### Cutting stations for time
 # NE_Kodiak <- c(162:180)
@@ -83,18 +83,18 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
   arrange(Stn_Order)
 
 # 2. Choose Departure Date
-DH_SIP <- ymd_hm("2023-05-17 10:00") 
-depart <- DH_SIP + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
+#DH_SIP <- ymd_hm("2023-05-17 14:00") 
+#depart <- DH_SIP + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
 
 # Use below during survey
-#depart <- lubridate::now(tzone = "America/Anchorage") + dhours(16.5) # Alaska time, for at sea calculations
+depart <- lubridate::now(tzone = "America/Anchorage") + dhours(1) # Alaska time, for at sea calculations
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"=
 
 SRTdata <- Sta %>% 
  mutate(Station_Time = lubridate::dhours(Total_Gear_Time)) %>% 
 #<<<<<<< Updated upstream
-  mutate(Ship_Speed = 10) %>%  # Ship speed is Variable
+  mutate(Ship_Speed = 11.5) %>%  # Ship speed is Variable
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
 #>>>>>>> Stashed changes
