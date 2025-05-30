@@ -51,10 +51,10 @@ AllSta<- c(0, 1:238)
 #Stations Left to Sample
 
 # Completed Stations
-CompleteScenL <- length(c(1:101)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1:135)) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(102:238)
+StaTDL<-c(136:238)
 
 ### Cutting stations for time
 # NE_Kodiak <- c(162:180)
@@ -87,7 +87,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 #depart <- DH_SIP + dhours(9) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
 
 # Use below during survey
-depart <- lubridate::now(tzone = "America/Anchorage") + dhours(1) # Alaska time, for at sea calculations
+depart <- lubridate::now(tzone = "America/Anchorage") + dhours(0.5) # Alaska time, for at sea calculations
 
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"=
 

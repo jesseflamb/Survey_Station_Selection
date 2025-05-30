@@ -53,27 +53,28 @@ AngRad <- angle_degrees*(pi / 180)
 BON_Dn_WS <- 40
 BON_Up_WS <- 20
 CTD_lt200_WS <- 30
-CTD_gt200_WS <- 45
+CTD_gt200_WS <- 30
 
 # Calc Vertical Speed by angle and Wire speed
 BON_Dn_VS <- BON_Dn_WS * sin(AngRad)
 BON_Up_VS <- BON_Up_WS * sin(AngRad)
 
-bon_max_T = ((300/BON_Dn_VS) + (300/BON_Up_VS)+ 10) / 60
+bon_max_T = ((300/BON_Dn_VS) + (300/BON_Up_VS)+ 20) / 60
 
 WGOA_wpz <- WGOA_wpz %>% 
   # Create BONGO_Time
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z <= 300),
-                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 10)/60, 
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 20)/60, 
                              0)) %>% 
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 300), 
                              bon_max_T, BONGO_Time)) %>%
   
   # Create CTD_Time
+  
   mutate(CTD_Time = ifelse(Gear.Sampled == "BONGO,CTD", 
                            case_when(
-                             Mean_Z <= 200 ~ (Mean_Z / CTD_lt200_WS) / 60,
-                             Mean_Z <= 300 ~ ((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS)) / 60,
+                             Mean_Z <= 200 ~ ((Mean_Z / CTD_lt200_WS)+9) / 60,
+                             Mean_Z <= 300 ~ (((200 / CTD_lt200_WS) + ((Mean_Z - 200) / CTD_gt200_WS))+12)/ 60,
                              Mean_Z > 300 ~ NA_real_ # Protocol restriction: Do not calculate beyond 300m
                            ) + ( 10 / 60), 0)) %>%
   

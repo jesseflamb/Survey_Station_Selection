@@ -44,12 +44,15 @@ WGOAdata <- read.csv(here("Data","2025 Station Data","2025-04-01 WGOA DY25-05 Ge
 AllSta<-c(1:238)
 
 ###Stations by Day/Interruptions
+# 5/29: c(224:196), ~ 5/31 @ 00:00
+# 5/31 Afternoon Weather: c(196,187,186,184,182,181,159:149)
+#6/1 Until End: : c(161:180)
 
 ## Completed Stations
-CompleteScenL <- length(c(1:23)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1:147, 224:216)) #Fill in with completed StaTDL stations
 
 ## Stations Remaining
-StaTDL<-c(24:32)
+StaTDL<-c(215:196)
 ScenName <- "Day Plan" # Best 
 Scenario<-StaTDL # Always Change to Updated Scene
 #Survey Begins Below
@@ -65,7 +68,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 # 2. Choose Departure Date
 #DH_SIP <- ymd_hm("2023-05-1 20:00") 
 #depart <- DH_SIP + dhours(8) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
-depart <- lubridate::now(tzone = "America/Anchorage") #+ dhours(0)
+depart <- lubridate::now(tzone = "America/Anchorage") + dhours(1)
 
 # 3. Create data.frame that mirrors "Final Station Runtime"
 # If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 86-89 & 119-120
