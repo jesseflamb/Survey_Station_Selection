@@ -59,12 +59,12 @@ CTD_gt200_WS <- 30
 BON_Dn_VS <- BON_Dn_WS * sin(AngRad)
 BON_Up_VS <- BON_Up_WS * sin(AngRad)
 
-bon_max_T = ((300/BON_Dn_VS) + (300/BON_Up_VS)+ 20) / 60
+bon_max_T = ((300/BON_Dn_VS) + (300/BON_Up_VS)+ 6) / 60
 
 WGOA_wpz <- WGOA_wpz %>% 
   # Create BONGO_Time
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z <= 300),
-                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 20)/60, 
+                             (((Mean_Z / BON_Dn_VS) + (Mean_Z / BON_Up_VS)) + 6)/60, 
                              0)) %>% 
   mutate(BONGO_Time = ifelse(Gear.Sampled %in% c("BONGO", "BONGO,CTD") & (Mean_Z > 300), 
                              bon_max_T, BONGO_Time)) %>%

@@ -1,10 +1,10 @@
 ---
-title: "DY23-07: WGOA Survey Stations Completed"
+title: "DY25-05: WGOA Survey Stations Completed"
 author: "Jesse F Lamb"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-The following table and map list the completed stations of DY23-07.  
+The following table and map list the completed stations of DY25-07 (Bongo & CTD).  
 ```{r Setup & Opening Table, message=FALSE, warning=FALSE, include=FALSE}
 
 #Install Packages
@@ -15,10 +15,7 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table",  
-              "tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4",
-              "oce", "here","reshape2", "viridis", "export", "rnaturalearth", "kableExtra",
-              "rnaturalearthdata", "forcats","sf", "geosphere")
+packages <- c("tidyr",  "dplyr","lubridate","hms", "ggplot2", "ggmap", "lattice", "stringr", "data.table","tibble","readxl", "sf","maps", "mapdata", "mapplots", "mapview", "marmap", "Cairo", "ncdf4","oce", "here","reshape2", "viridis", "export", "rnaturalearth", "kableExtra","rnaturalearthdata", "forcats","sf", "geosphere")
 ipak(packages)
 
 # Create Base Layer Maps will all numbered stations labeled, with a more focused region (not whole WGOA)
@@ -29,21 +26,19 @@ class(world)
 
 ## Overview:
 
-Below are a Station Table and Map of the rest of the Survey
+Below are a Station Table and Map of the completed survey. 
 
 ```{r Opening Table, echo=FALSE, warning=FALSE, message=FALSE}
 # Load Station Data Table from DY19-05
-#WGOAdata <- read.csv(here("Data","WGOA station_list_dougherty_2019_ProjInstrutions.csv"))
-WGOAdata <- read.csv(here("Data","DY23-07_A&B_priority FINAL LIST.csv"))
+# Load Station Data Table from DY19-05
+WGOAdata <- read.csv(here("Data","2025 Station Data","2025-04-01 WGOA DY25-05 GearTime & WPZ.csv"))
+
 
 ### Create Station & Runtime Dataset ############
 
 ###All Stations: based on "Station Column" of "WGOA station_list_dougherty_2019_ProjInstrutions.csv", currently
 # in "Data"
-AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,271) 
-
-# Log of Removed Stations before Survey
-# (5/11/23): B 38:44,68:76
+AllSta<- c(1:238) 
 
 #Stations Left to Sample
 
@@ -51,31 +46,10 @@ AllSta<- c(0, 1:9,28:24,38:44,59:53,68:179,180,213:208,216:220,228:225,234:238,2
 CompleteScenL <- length(c()) #Fill in with completed StaTDL stations
 
 # Staions Remaining 
-StaTDL<-c(1,6,5,2:4,7:9,24:28,59:53,84:77,92,91,
-  90:85,100:97,96,95:93,107:105,110,119,117,115,124,122,128,127)
-
-### Cutting B stations for time
-
-STA.0516 <- c(157:159,166,168,170,172,174,176,178:180)
-STA.0520 <- c(167:177) # All Shelikof Stations Cut
+StaTDL<-c(1:147, 224:196, 186,184,182,181,175:178, 161, 159, 157:148)
 
 
-#B_Drop_Vec <- c(STA.0516,STA.0517)
-#Drop Stations by subset using updated above vector, keep drops by date
-
-#WGOAdata <- WGOAdata %>% subset(!(Station %in% STA.0516))
-
-# Save CSV of above for Day to Day
-#write.csv(WGOAdata, here("Data","DY23-07_Day2Day.csv"))
-
-# Reverse Order Stations for Reference (DO NOT DELETE)
-# 
-#            c(1:9,24:28,59:53,84:77, 92:85, 100:93, 107:101,113:108,119:114, 
-#           125:120, 131:126, 136:132,141:137, 142:142,152:148, 156:153, 159:157,165:160,
-#           166:179,180,213:208,216:220,228:225,234:238,271)
-
-
-ScenName <- "Stations Completed"
+ScenName <- "Completed: "
 Scenario<-StaTDL # Always Change to Updated Stations Remaining
 FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= (CompleteScenL+1):(CompleteScenL+length(Scenario)))
 
@@ -95,27 +69,17 @@ depart <- lubridate::now(tzone = "America/Anchorage") + dhours(16.5) # Alaska ti
 # 3. Create data.frame that mirrors "Final Station Runtime.xlsx"=
 
 SRTdata <- Sta %>% 
-  mutate(Bongo_hrs = ifelse(Gear.Sampled == "BONGO", 0.33,0)) %>% # BONGO at all stations
-  mutate(BON_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CTD",0.83,0)) %>%
-  mutate(BON_CalVET_hrs = ifelse(Gear.Sampled == "BONGO,CALVET", 0.66,0)) %>%
-  mutate(BON_Cal_CTD_hrs = ifelse(Gear.Sampled == "BONGO,CALVET,CTD",1.16,0)) %>%
+ mutate(Station_Time = lubridate::dhours(Total_Gear_Time)) %>% 
 #<<<<<<< Updated upstream
-  mutate(Station_Time = lubridate::dhours(rowSums(across(c(Bongo_hrs,BON_CTD_hrs,BON_CalVET_hrs,BON_Cal_CTD_hrs))))) %>% 
-  mutate(Ship_Speed = 11) %>%  # Ship speed is Variable
+  mutate(Ship_Speed = 11.75) %>% # Ship speed is Variable  
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
 #>>>>>>> Stashed changes
   mutate(Dist_NM = ifelse(Station == 0,0,0) ) %>% 
-  mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>% 
-  # distGEO does what code below does in base r
+  mutate(Dist_NM = distGeo(cbind(LON,LAT),cbind(shift(LON),shift(LAT)))/(1000*1.852)) %>% # distGEO does what code below does in base
 #  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
-
-# Write .csv of new Station Order for Oscar Dyson crew 
-ODsta <- SRTdata %>% select(Grid.ID,LAT,LON,Gear.Sampled,Stn_Order,Dist_NM) 
-write.csv(ODsta, here("Data","For Dyson","DY23-07 Survey Station Order.csv"), row.names = FALSE) #Error if file open
-
 
 # 4. rearrange data to calculate time to travel to and complete station operations
 shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T, Stn_Order) %>% # SRTdata will be replaced by filtered stations above
@@ -134,15 +98,13 @@ ShipsLog <- shipslog %>% group_by(Stn_Order, Station, Grid.ID) %>%
   rename("Station"="Stn_Order","Grid Station"="Grid.ID","Est.Station Time"="Sta_Time")
 
 #6. Create a table to link Gear.Sampled for daily stations in ShipsLog to know Operations at each station
+# Check: Gear.Sampled or Gear.Sampled2???
 Sta_GearSamp <- SRTdata %>% select(Station,Grid.ID,LAT,LON,Gear.Sampled) %>% 
 filter(Station %in% FinalSta$Station) %>% select(Grid.ID,LAT,LON,Gear.Sampled) %>% 
   rename("Grid Station"="Grid.ID")
 
 ShipsLog <- left_join(ShipsLog,Sta_GearSamp, by = "Grid Station") %>% 
-  select(Station,`Grid Station`,Gear.Sampled)
-#select(Station,`Grid Station`,LAT,LON,Gear.Sampled,`Est.Station Time`)
-
-#write.csv(ShipsLog,here("Docs","DY23-07_Spr_Larval_Completed_Sta.csv"))
+  select(Station,`Grid Station`,LAT,LON,Gear.Sampled,`Est.Station Time`)
 
 # Output Station Table, include: Ships Log
 kbl(ShipsLog, caption = "Next Stations", booktabs = T) %>% 
@@ -175,10 +137,14 @@ StaMapF <-ggplot()+geom_contour(data = bf, aes(x=x, y=y, z=z),breaks=c(-50),line
   geom_point(data = SRTdata, mapping = aes(LON, LAT, shape = Gear.Sampled), size = 1)+ 
   geom_path(data = SRTdata, mapping = aes(LON, LAT), linewidth = 0.25) +  
   geom_text(data = SRTdata, mapping = aes(LON, LAT, label = Stn_Order ), nudge_y = -0.08, size = 2.5)+ 
-  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ ggtitle(paste(ScenName,length(Scenario),"Stations")) +
+  scale_shape_discrete()+ theme_bw()+xlab("Longitude")+ylab("Latitude")+ ggtitle(paste(ScenName,length(Scenario) +1,"Stations")) +
   theme(axis.text.x=element_text(size=8,hjust = 1,vjust = 1, angle = 45, color = "black"), axis.text.y = element_text(size=8, color = "black")) 
 
 StaMapF
+
+ggsave(filename = here("Figures","DY25-05 Stations Completed.png"), plot = StaMapF, dpi = 300)
+
+
 ```
 
 

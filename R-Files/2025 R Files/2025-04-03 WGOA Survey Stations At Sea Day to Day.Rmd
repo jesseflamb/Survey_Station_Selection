@@ -49,11 +49,11 @@ AllSta<-c(1:238)
 #6/1 Until End: : c(161:180)
 
 ## Completed Stations
-CompleteScenL <- length(c(1:147, 224:216)) #Fill in with completed StaTDL stations
+CompleteScenL <- length(c(1:147, 224:196,187,186,184,182,181,175)) #Fill in with completed StaTDL stations
 
 ## Stations Remaining
-StaTDL<-c(215:196)
-ScenName <- "Day Plan" # Best 
+StaTDL<-c(1:147, 224:196, 186,184,182,181,175:178, 161, 159, 157:148)
+ScenName <- "Stations Completed" # Best 
 Scenario<-StaTDL # Always Change to Updated Scene
 #Survey Begins Below
 #FinalSta<-data.frame("Station"=Scenario,"Stn_Order"= 1:length(Scenario))
@@ -68,7 +68,7 @@ Sta <- WGOAdata %>% left_join(.,FinalSta) %>%
 # 2. Choose Departure Date
 #DH_SIP <- ymd_hm("2023-05-1 20:00") 
 #depart <- DH_SIP + dhours(8) # pre-survey calculations, takes ~8 hours to get to STA 1 from DH
-depart <- lubridate::now(tzone = "America/Anchorage") + dhours(1)
+depart <- lubridate::now(tzone = "America/Anchorage") + dhours(.75)
 
 # 3. Create data.frame that mirrors "Final Station Runtime"
 # If using smalled CalVET grid, use "Gear.Sampled2".  Also, change Gear.Sampled on lines 86-89 & 119-120
@@ -76,7 +76,7 @@ depart <- lubridate::now(tzone = "America/Anchorage") + dhours(1)
 SRTdata <- Sta %>% 
  mutate(Station_Time = lubridate::dhours(Total_Gear_Time)) %>% 
 #<<<<<<< Updated upstream
-  mutate(Ship_Speed = 12.0) %>% # Ship speed is Variable  
+  mutate(Ship_Speed = 11.75) %>% # Ship speed is Variable  
   mutate(lat_rad = LAT*pi/180) %>% mutate(long_rad = LON*pi/180) %>% 
   mutate(long_dif = long_rad - shift(long_rad)) %>% 
 #>>>>>>> Stashed changes
