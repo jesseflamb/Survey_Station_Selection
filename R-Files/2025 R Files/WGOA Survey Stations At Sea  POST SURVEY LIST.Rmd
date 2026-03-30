@@ -80,7 +80,6 @@ SRTdata <- Sta %>%
 #  mutate(Dist_NM = acos((sin(lag(lat_rad))*sin(lat_rad))+(cos(lag(lat_rad))*cos(lat_rad)*cos(long_dif)))/(pi/180)*60) %>%  
   mutate(Steam_T = Dist_NM/Ship_Speed) %>% 
   mutate(Steam_T = lubridate::dhours(Steam_T))
-
 # 4. rearrange data to calculate time to travel to and complete station operations
 shipslog <- SRTdata %>% select(Station, Grid.ID, Station_Time, Steam_T, Stn_Order) %>% # SRTdata will be replaced by filtered stations above
   unite("Station",Station:Grid.ID, sep = "_", remove = FALSE) %>% 
